@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- TODO: Přidat podporu pro RX a TX směr prostředí  -->
+<!-- TODO: Podpora pro výpis a   -->
+<!-- TODO: zkontrolovat metodu used() v TX prostředí, která slučují itemy (mvb + mfb) -->
+<!-- TODO: Podpora resetu -->
+<!-- TODO: Rozmyslet jak s {RX, TX} x {PASSIVE, ACTIVE} při vytváření prostředí a rozmyslet sequencer -->
+<!-- TODO: Jak řešit sequencer pro TX -->
+<!-- TODO: Reste agent => sync_connect, callback object => push_back -->
+<!-- TODO: U sequence itemu rozmyslet jak na (suffix_type) pole + způsob tisku zadt do xml  -->
+<!-- TODO: Předání PKT_MTU generátoru paketů ...  -->
+
+<testbench version="0.1">
+    <generics>
+        <REGIONS type="int unsigned" value="2"/>
+        <REGION_SIZE type="int unsigned" value="8"/>
+        <BLOCK_SIZE type="int unsigned" value="8"/>
+        <ITEM_WIDTH type="int unsigned" value="8"/>
+        <PKT_MTU type="int unsigned" value="16383"/>
+        <RX_DMA_CHANNELS type="int unsigned" value="32"/>
+        <NPP_HDR_SIZE type="int unsigned" value="4"/>
+        <TX_DMA_CHANNELS type="int unsigned" value="32"/>
+        <HDR_META_WIDTH type="int unsigned" value="12"/>
+        <PLAYER_FIFO_DEPTH type="int unsigned" value="512"/>
+        <RX_HDR_INS_EN type="logic" value="1'b0"/>
+        <SAME_CLK type="logic" value="1'b0"/>
+        <MI_PIPE_EN type="logic" value="1'b1"/>
+        <FAKE_SWITCH type="logic" value="1'b0"/>
+        <DEVICE type="string"  value="STRATIX10"/>
+    </generics>
+
+    <envs>
+        <new name="eth">
+            <generics>
+                <REGIONS type="int unsigned"/>
+                <REGION_SIZE type="int unsigned"/>
+                <BLOCK_SIZE type="int unsigned"/>
+                <ITEM_WIDTH type="int unsigned"/>
+                <PKT_MTU type="int unsigned"/>
+                <DMA_CHANNELS type="int unsigned"/>
+                <HDR_META_WIDTH type="int unsigned"/>
+            </generics>
+
+            <sequence_item>
+                <item type="logic [$clog2(PKT_MTU)-1:0]">len</item>
+                <item type="int unsigned">channel</item>
+                <item type="logic [HDR_META_WIDTH-1:0]">hdr_meta</item>
+                <item type="logic">discard</item>
+                <item type="logic [ITEM_WIDTH-1:0]" array="[]">data</item>
+
+                <convert2string>
+                    ret = {ret, $formatf("\n\tlen : %0d\n\tchannel %0d\n\tmeta %h\n\tdiscard %b\n\tdata %p\n", len, channel, hdr_meta, discard, data)};
+                </convert2string>
+            </sequence_item>
+
+            <config>
+                <active type="uvm_active_passive_enum"/>
+                <interface_name type="string"/>
+            </config>
+
+            <agents>
+                <logic_vector_array_mfb name = "mfb" dir="RX">
+                    <config>
+                        <interface_name>{m_config.interface_name, "_mfb"}</interface_name>
+                        <active>m_config.active</active>
+                    </config>
+
+                    <generics>
+                        <regions>REGIONS</regions>
+                        <region_size>REGION_SIZE</region_size>
+                        <block_size>BLOCK_SIZE</block_size>
+                        <item_width>ITEM_WIDTH</item_width>
+                    </generics>
+                </logic_vector_array_mfb>
+
+                <logic_vector_mvb name="mvb" dir="RX">
+                    <config>
+                        <interface_name>{m_config.interface_name, "_mvb"}</interface_name>
+                        <active>m_config.active</active>
+                    </config>
+
+                    <generics>
+                        <items>REGIONS</items>
+                        <item_width>$clog2(PKT_MTU)+$clog2(DMA_CHANNELS)+HDR_META_WIDTH+1</item_width>
+                    </generics>
+                </logic_vector_mvb>
+            </agents>
+        </new>
+    </envs>
+
+    <agents>
+        <reset name="rst">
+        </reset>
+
+        <eth name="eth_rx" reset="rst" dir="RX">
+            <generics>
+                <REGIONS>REGIONS</REGIONS>
+                <REGION_SIZE>REGION_SIZE</REGION_SIZE>
+                <BLOCK_SIZE>BLOCK_SIZE</BLOCK_SIZE>
+                <ITEM_WIDTH>ITEM_WIDTH</ITEM_WIDTH>
+                <PKT_MTU>PKT_MTU</PKT_MTU>
+                <DMA_CHANNELS>RX_DMA_CHANNELS</DMA_CHANNELS>
+                <HDR_META_WIDTH>HDR_META_WIDTH</HDR_META_WIDTH>
+            </generics>
+
+            <config>
+                 <interface_name>"vif_eth_rx"</interface_name>
+                 <active>UVM_ACTIVE</active>
+            </config>
+        </eth>
+
+        <eth name="eth_tx" reset="rst" dir="TX">
+            <generics>
+                <REGIONS>REGIONS</REGIONS>
+                <REGION_SIZE>REGION_SIZE</REGION_SIZE>
+                <BLOCK_SIZE>BLOCK_SIZE</BLOCK_SIZE>
+                <ITEM_WIDTH>ITEM_WIDTH</ITEM_WIDTH>
+                <PKT_MTU>PKT_MTU</PKT_MTU>
+                <DMA_CHANNELS>TX_DMA_CHANNELS</DMA_CHANNELS>
+                <HDR_META_WIDTH>HDR_META_WIDTH</HDR_META_WIDTH>
+            </generics>
+
+            <config>
+                 <interface_name>"vif_eth_tx"</interface_name>
+                 <active>UVM_ACTIVE</active>
+            </config>
+        </eth>
+
+        <eth name="dma_rx" reset="rst" dir="RX">
+            <generics>
+                <REGIONS>REGIONS</REGIONS>
+                <REGION_SIZE>REGION_SIZE</REGION_SIZE>
+                <BLOCK_SIZE>BLOCK_SIZE</BLOCK_SIZE>
+                <ITEM_WIDTH>ITEM_WIDTH</ITEM_WIDTH>
+                <PKT_MTU>PKT_MTU</PKT_MTU>
+                <DMA_CHANNELS>TX_DMA_CHANNELS</DMA_CHANNELS>
+                <HDR_META_WIDTH>HDR_META_WIDTH</HDR_META_WIDTH>
+            </generics>
+
+            <config>
+                 <interface_name>"vif_eth_rx"</interface_name>
+                 <active>UVM_ACTIVE</active>
+            </config>
+        </eth>
+
+        <eth name="dma_tx" reset="rst" dir="TX">
+            <generics>
+                <REGIONS>REGIONS</REGIONS>
+                <REGION_SIZE>REGION_SIZE</REGION_SIZE>
+                <BLOCK_SIZE>BLOCK_SIZE</BLOCK_SIZE>
+                <ITEM_WIDTH>ITEM_WIDTH</ITEM_WIDTH>
+                <PKT_MTU>PKT_MTU</PKT_MTU>
+                <DMA_CHANNELS>RX_DMA_CHANNELS</DMA_CHANNELS>
+                <HDR_META_WIDTH>HDR_META_WIDTH</HDR_META_WIDTH>
+            </generics>
+
+            <config>
+                 <interface_name>"vif_dma_tx"</interface_name>
+                 <active>UVM_ACTIVE</active>
+            </config>
+        </eth>
+    </agents>
+
+    <dut name="DUT_U" entity="GEN_LOOP_SWITCH">
+        <generics>
+            <REGIONS>REGIONS</REGIONS>
+            <REGION_SIZE>REGION_SIZE</REGION_SIZE>
+            <BLOCK_SIZE>BLOCK_SIZE</BLOCK_SIZE>
+            <ITEM_WIDTH>ITEM_WIDTH</ITEM_WIDTH>
+            <PKT_MTU>PKT_MTU</PKT_MTU>
+            <RX_DMA_CHANNELS>RX_DMA_CHANNELS</RX_DMA_CHANNELS>
+            <NPP_HDR_SIZE>NPP_HDR_SIZE</NPP_HDR_SIZE>
+            <TX_DMA_CHANNELS>TX_DMA_CHANNELS</TX_DMA_CHANNELS>
+            <HDR_META_WIDTH>HDR_META_WIDTH</HDR_META_WIDTH>
+            <PLAYER_FIFO_DEPTH>PLAYER_FIFO_DEPTH</PLAYER_FIFO_DEPTH>
+            <RX_HDR_INS_EN>RX_HDR_INS_EN</RX_HDR_INS_EN>
+            <SAME_CLK>SAME_CLK</SAME_CLK>
+            <MI_PIPE_EN>MI_PIPE_EN</MI_PIPE_EN>
+            <FAKE_SWITCH>FAKE_SWITCH</FAKE_SWITCH>
+            <DEVICE>DEVICE</DEVICE>
+        </generics>
+
+        <ports>
+            <CLK   port="CLK"/>
+            <RESET port="rst.RESET"/>
+
+            <MI_CLK   port=""/>
+            <MI_RESET port=""/>
+            <MI_DWR   port=""/>
+            <MI_ADDR  port=""/>
+            <MI_BE    port=""/>
+            <MI_RD    port=""/>
+            <MI_WR    port=""/>
+            <MI_ARDY  port=""/>
+            <MI_DRD   port=""/>
+            <MI_DRDY  port=""/>
+
+            <ETH_RX_MVB_LEN      port=""/>
+            <ETH_RX_MVB_CHANNEL  port=""/>
+            <ETH_RX_MVB_HDR_META port=""/>
+            <ETH_RX_MVB_DISCARD  port=""/>
+            <ETH_RX_MVB_VLD      port="eth_rx_mvb.VLD"/>
+            <ETH_RX_MVB_SRC_RDY  port="eth_rx_mvb.SRC_RDY"/>
+            <ETH_RX_MVB_DST_RDY  port="eth_rx_mvb.DST_RDY"/>
+            <ETH_RX_MFB_DATA     port="eth_rx_mfb.DATA"/>
+            <ETH_RX_MFB_SOF      port="eth_rx_mfb.SOF"/>
+            <ETH_RX_MFB_EOF      port="eth_rx_mfb.EOF"/>
+            <ETH_RX_MFB_SOF_POS  port="eth_rx_mfb.SOF_POS"/>
+            <ETH_RX_MFB_EOF_POS  port="eth_rx_mfb.EOF_POS"/>
+            <ETH_RX_MFB_SRC_RDY  port="eth_rx_mfb.SRC_RDY"/>
+            <ETH_RX_MFB_DST_RDY  port="eth_rx_mfb.DST_RDY"/>
+
+            <ETH_TX_MVB_LEN      port=""/>
+            <ETH_TX_MVB_CHANNEL  port=""/>
+            <ETH_TX_MVB_HDR_META port=""/>
+            <ETH_TX_MVB_VLD      port="eth_tx_mvb.VLD"/>
+            <ETH_TX_MVB_SRC_RDY  port="eth_tx_mvb.SRC_RDY"/>
+            <ETH_TX_MVB_DST_RDY  port="eth_tx_mvb.DST_RDY"/>
+            <ETH_TX_MFB_DATA     port="eth_tx_mfb.DATA"/>
+            <ETH_TX_MFB_SOF      port="eth_tx_mfb.SOF"/>
+            <ETH_TX_MFB_EOF      port="eth_tx_mfb.EOF"/>
+            <ETH_TX_MFB_SOF_POS  port="eth_tx_mfb.SOF_POS"/>
+            <ETH_TX_MFB_EOF_POS  port="eth_tx_mfb.EOF_POS"/>
+            <ETH_TX_MFB_SRC_RDY  port="eth_tx_mfb.SRC_RDY"/>
+            <ETH_TX_MFB_DST_RDY  port="eth_tx_mfb.DST_RDY"/>
+
+            <DMA_RX_MVB_LEN      port=""/>
+            <DMA_RX_MVB_CHANNEL  port=""/>
+            <DMA_RX_MVB_HDR_META port=""/>
+            <DMA_RX_MVB_DISCARD  port=""/>
+            <DMA_RX_MVB_VLD      port="dma_rx_mvb.VLD"/>
+            <DMA_RX_MVB_SRC_RDY  port="dma_rx_mvb.SRC_RDY"/>
+            <DMA_RX_MVB_DST_RDY  port="dma_rx_mvb.DST_RDY"/>
+            <DMA_RX_MFB_DATA     port="dma_rx_mfb.DATA"/>
+            <DMA_RX_MFB_SOF      port="dma_rx_mfb.SOF"/>
+            <DMA_RX_MFB_EOF      port="dma_rx_mfb.EOF"/>
+            <DMA_RX_MFB_SOF_POS  port="dma_rx_mfb.SOF_POS"/>
+            <DMA_RX_MFB_EOF_POS  port="dma_rx_mfb.EOF_POS"/>
+            <DMA_RX_MFB_SRC_RDY  port="dma_rx_mfb.SRC_RDY"/>
+            <DMA_RX_MFB_DST_RDY  port="dma_rx_mfb.DST_RDY"/>
+
+            <DMA_TX_MVB_LEN      port=""/>
+            <DMA_TX_MVB_CHANNEL  port=""/>
+            <DMA_TX_MVB_HDR_META port=""/>
+            <DMA_TX_MVB_VLD      port="dma_tx_mvb.VLD"/>
+            <DMA_TX_MVB_SRC_RDY  port="dma_tx_mvb.SRC_RDY"/>
+            <DMA_TX_MVB_DST_RDY  port="dma_tx_mvb.DST_RDY"/>
+            <DMA_TX_MFB_DATA     port="dma_tx_mfb.DATA"/>
+            <DMA_TX_MFB_SOF      port="dma_tx_mfb.SOF"/>
+            <DMA_TX_MFB_EOF      port="dma_tx_mfb.EOF"/>
+            <DMA_TX_MFB_SOF_POS  port="dma_tx_mfb.SOF_POS"/>
+            <DMA_TX_MFB_EOF_POS  port="dma_tx_mfb.EOF_POS"/>
+            <DMA_TX_MFB_SRC_RDY  port="dma_tx_mfb.SRC_RDY"/>
+            <DMA_TX_MFB_DST_RDY  port="dma_tx_mfb.DST_RDY"/>
+        </ports>
+    </dut>
+</testbench>

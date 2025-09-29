@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<testbench version="0.1">
+
+    <generics>
+        <DEVICE               type="string"       value="&quot;STRATIX10&quot;"/>
+        <RX_CHANNELS          type="int unsigned" value="8"/>
+        <TX_CHANNELS          type="int unsigned" value="8"/>
+        <USR_MVB_ITEMS        type="int unsigned" value="1"/>
+        <USR_MFB_REGIONS      type="int unsigned" value="1"/>
+        <USR_MFB_REGION_SIZE  type="int unsigned" value="8"/>
+        <USR_MFB_BLOCK_SIZE   type="int unsigned" value="8"/>
+        <USR_MFB_ITEM_WIDTH   type="int unsigned" value="8"/>
+        <USR_PKT_SIZE_MAX     type="int unsigned" value="2**12"/>
+        <DMA_ENDPOINTS        type="int unsigned" value="1" />
+        <UP_MFB_REGIONS       type="int unsigned" value="2"/>
+        <UP_MFB_REGION_SIZE   type="int unsigned" value="1"/>
+        <UP_MFB_BLOCK_SIZE    type="int unsigned" value="8"/>
+        <UP_MFB_ITEM_WIDTH    type="int unsigned" value="32"/>
+        <DOWN_MFB_REGIONS     type="int unsigned" value="2"/>
+        <DOWN_MFB_REGION_SIZE type="int unsigned" value="1"/>
+        <DOWN_MFB_BLOCK_SIZE  type="int unsigned" value="8"/>
+        <DOWN_MFB_ITEM_WIDTH  type="int unsigned" value="32"/>
+    </generics>
+
+    <envs>
+        <new name="usr">
+           <generics>
+                <CHANNELS type="int unsigned"/>
+                <MVB_ITEMS type="int unsigned"/>
+                <PKT_MTU type="int unsigned"/>
+                <MFB_REGIONS type="int unsigned"/>
+                <MFB_REGION_SIZE type="int unsigned"/>
+                <MFB_BLOCK_SIZE type="int unsigned"/>
+                <MFB_ITEM_WIDTH type="int unsigned"/>
+                <META_WIDTH     type="int unsigned" value="12"/>
+            </generics>
+
+            <sequence_item>
+                <item type="int unsigned">channel</item>
+                <item type="logic [META_WIDTH-1:0]">meta</item>
+                <item type="logic">discard</item>
+                <item type="logic [MFB_ITEM_WIDTH-1:0]" array="[]">data</item>
+
+                <convert2string>
+                    ret = {ret, $sformatf(
+                            "\n\tlen : %0d\n\tchannel %0d\n\tmeta %h\n\tdiscard %b\n\tdata %p\n",
+                            data.size(), channel, meta, discard, data)
+                        };
+                </convert2string>
+            </sequence_item>
+
+            <config>
+                <active type="uvm_active_passive_enum"/>
+            </config>
+
+            <agents>
+                <!-- CO s tím for loop jak se to má chovat.
+                Jak to rozhodnout co z toho to má být?
+                1) Každy musí přispět do jednotébo itemu
+                2) Kdo vytvořít item ten bude označen následně portem.
+                -->
+                <for iterator="IT" end="2">
+                    <logic_vector_array_mfb name = "mfb" dir="RX">
+                        <config>
+                            <active>m_config.active</active>
+                        </config>
+
+                        <generics>
+                            <regions>MFB_REGIONS</regions>
+                            <region_size>MFB_REGION_SIZE</region_size>
+                            <block_size>MFB_BLOCK_SIZE</block_size>
+                            <item_width>MFB_ITEM_WIDTH</item_width>
+                        </generics>
+                    </logic_vector_array_mfb>
+                <!-- Co kdyby byl konec for loop tady -->
+                    <logic_vector_mvb name="mvb" dir="RX">
+                        <config>
+                            <active>m_config.active</active>
+                        </config>
+
+                        <generics>
+                            <items>MVB_ITEMS</items>
+                            <item_width>$clog2(PKT_MTU)+$clog2(CHANNELS)+META_WIDTH+1</item_width>
+                        </generics>
+                    </logic_vector_mvb>
+                </for>
+            </agents>
+        </new>
+
+        <new name="dma">
+           <!--
+               Možná bude potřeba dynamyčtější překlad hlaviček.
+               dzvlášť pro DOWN směr a zvlášť pro UP. To asi nemá moc cenu.
+               Zajímavější je využití vytvoření komponenty, která simulovala nějaký příjem
+               a odesílání například PCI Expres RQ - RC a CQ - CC.
+               Nebo nějakou komponentu, která přijme data a na jejich základě do několika taktů
+               vygeneruje odpověď
+           -->
+           <generics>
+                <HDR_WIDTH type="int unsigned"/>
+                <REGIONS type="int unsigned"/>
+                <REGION_SIZE type="int unsigned"/>
+                <BLOCK_SIZE type="int unsigned"/>
+                <ITEM_WIDTH type="int unsigned"/>
+            </generics>
+
+            <sequence_item>
+                <item type="logic [HDR_WIDTH-1:0]">meta</item>
+                <item type="logic [ITEM_WIDTH-1:0]" array="[]">data</item>
+
+                <convert2string>
+                    ret = {ret, $sformatf("\n\tmeta : %h\n\tlen : %0d\n\tdata %p", meta, data.size(), data)};
+                </convert2string>
+            </sequence_item>
+
+            <config>
+                <active type="uvm_active_passive_enum"/>
+            </config>
+
+            <agents>
+                <logic_vector_array_mfb name = "mfb" dir="RX">
+                    <config>
+                        <active>m_config.active</active>
+                    </config>
+
+                    <generics>
+                        <regions>REGIONS</regions>
+                        <region_size>REGION_SIZE</region_size>
+                        <block_size>BLOCK_SIZE</block_size>
+                        <item_width>ITEM_WIDTH</item_width>
+                    </generics>
+                </logic_vector_array_mfb>
+
+                <logic_vector_mvb name="mvb" dir="RX">
+                    <config>
+                        <active>m_config.active</active>
+                    </config>
+
+                    <generics>
+                        <items>REGIONS</items>
+                        <item_width>HDR_WIDTH</item_width>
+                    </generics>
+                </logic_vector_mvb>
+            </agents>
+        </new>
+    </envs>
+
+    <agents>
+        <reset name="usr_rst">
+                <config>
+                     <active>UVM_ACTIVE</active>
+                </config>
+        </reset>
+
+        <usr name="usr_rx" reset="usr_rst" dir="RX">
+            <generics>
+                <!-- Přidat odstranění býlých znaků na začátku a na konci v pythonu -->
+                <CHANNELS>        RX_CHANNELS        </CHANNELS>
+                <PKT_MTU>         USR_PKT_SIZE_MAX   </PKT_MTU>
+                <MVB_ITEMS>       USR_MVB_ITEMS      </MVB_ITEMS>
+                <MFB_REGIONS>     USR_MFB_REGIONS    </MFB_REGIONS>
+                <MFB_REGION_SIZE> USR_MFB_REGION_SIZE</MFB_REGION_SIZE>
+                <MFB_BLOCK_SIZE>  USR_MFB_BLOCK_SIZE </MFB_BLOCK_SIZE>
+                <MFB_ITEM_WIDTH>  USR_MFB_ITEM_WIDTH </MFB_ITEM_WIDTH>
+            </generics>
+
+            <config>
+                 <active>UVM_ACTIVE</active>
+            </config>
+        </usr>
+
+        <usr name="usr_tx" reset="usr_rst" dir="TX">
+            <generics>
+                <!-- Přidat odstranění býlých znaků na začátku a na konci v pythonu -->
+                <CHANNELS>        TX_CHANNELS        </CHANNELS>
+                <PKT_MTU>         USR_PKT_SIZE_MAX   </PKT_MTU>
+                <MVB_ITEMS>       USR_MVB_ITEMS      </MVB_ITEMS>
+                <MFB_REGIONS>     USR_MFB_REGIONS    </MFB_REGIONS>
+                <MFB_REGION_SIZE> USR_MFB_REGION_SIZE</MFB_REGION_SIZE>
+                <MFB_BLOCK_SIZE>  USR_MFB_BLOCK_SIZE </MFB_BLOCK_SIZE>
+                <MFB_ITEM_WIDTH>  USR_MFB_ITEM_WIDTH </MFB_ITEM_WIDTH>
+            </generics>
+
+            <config>
+                 <active>UVM_ACTIVE</active>
+            </config>
+        </usr>
+
+
+        <for iterator="IT" end="DMA_ENDPOINTS">
+            <reset name="dma_rst">
+                 <config>
+                     <active>UVM_ACTIVE</active>
+                </config>
+           </reset>
+
+            <dma name="dma_rx" reset="usr_rst" dir="RX">
+               <generics>
+                   <HDR_WIDTH>   64 </HDR_WIDTH>
+                   <REGIONS>     DOWN_MFB_REGIONS     </REGIONS>
+                   <REGION_SIZE> DOWN_MFB_REGION_SIZE </REGION_SIZE>
+                   <BLOCK_SIZE>  DOWN_MFB_BLOCK_SIZE  </BLOCK_SIZE>
+                   <ITEM_WIDTH>  DOWN_MFB_ITEM_WIDTH  </ITEM_WIDTH>
+                </generics>
+
+                <config>
+                     <active>UVM_ACTIVE</active>
+                </config>
+            </dma>
+
+            <dma name="dma_tx" reset="dma_rst[IT]" dir="TX">
+                <generics>
+                   <HDR_WIDTH>   64 </HDR_WIDTH>  
+                   <REGIONS>     UP_MFB_REGIONS     </REGIONS>
+                   <REGION_SIZE> UP_MFB_REGION_SIZE </REGION_SIZE>
+                   <BLOCK_SIZE>  UP_MFB_BLOCK_SIZE  </BLOCK_SIZE>
+                   <ITEM_WIDTH>  UP_MFB_ITEM_WIDTH  </ITEM_WIDTH>
+                </generics>
+
+                <config>
+                     <active>UVM_ACTIVE</active>
+                </config>
+            </dma>
+        </for>
+
+        <!-- ADD MI INTERFACE -->
+    </agents>
+
+    <dut name="DUT_U" entity="DMA_MEDUSA">
+        <generics>
+            <REGIONS>REGIONS</REGIONS>
+            <REGION_SIZE>REGION_SIZE</REGION_SIZE>
+            <BLOCK_SIZE>BLOCK_SIZE</BLOCK_SIZE>
+        </generics>
+
+        <ports>
+            <CLK   port="CLK"/>
+            <RESET port="rst.RESET"/>
+        </ports>
+    </dut>
+</testbench>
+
