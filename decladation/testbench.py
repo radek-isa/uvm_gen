@@ -118,27 +118,34 @@ class uvm_testbench(block):
             print (f"\t`uvm_component_param_utils(uvm_env_top::model{generic_assign})", file = file)
             print (f"", file = file)
             for block in self.blocks:
-                lambda_param = instantiation.lambda_param;
+                lambda_param = instantiation.lambda_param(1);
                 lambda_gen = [];
-                lambda_gen.append(lambda obj  : "{prefix}")
-                lambda_gen.append(lambda obj  : "uvm_tlm_analysis_fifo" if obj.dir ==  instantiation.agent_dir.RX else "analysis_port")
-                lambda_gen.append(lambda obj  : "#(" + obj.item2string(obj.dir) + ")")
-                lambda_gen.append(lambda obj  : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
-                lambda_gen.append(lambda obj  : obj.name)
-                lambda_gen.append(lambda obj  : "\n")
-                ret_str = block.lambda2string(lambda_gen);
-                print(ret_str)
-                f_string = ""
-                f_string += "{prefix}uvm_tlm_analysis_fifo#({item}) fifo_{agent}{array};\n"
-                ret_str = block.cmd_inst2string(f_string, False, "\t", "")
-                print (ret_str, file = file)
+                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "uvm_tlm_analysis_fifo" if obj.dir ==  instantiation.agent_dir.RX else "analysis_port")
+                lambda_gen.append(lambda obj, lambda_param : "#(" + obj.item2string(obj.dir) + ") ")
+                lambda_gen.append(lambda obj, lambda_param : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
+                lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[1]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : "\n")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file,  end='')
             print (f"", file = file)
             print (f"\tfunction new (string name, uvm_component parent = null);\n\t\tsuper.new(name, parent);", file = file)
             for block in self.blocks:
-                f_string = ""
-                f_string += "{prefix}fifo_{agent}{array} = new({br_left}\"fifo_{agent}\"{reg_array}{br_right}, this);\n"
-                ret_str = block.cmd2string(f_string, False, "\t\t")
-                print (ret_str, file = file)
+                lambda_param = instantiation.lambda_param(1);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
+                lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : "".join([" = new($sformatf(\"", "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_", obj.name, "".join([f"_%0d" for x in lambda_param.array]), "\"" ,"".join([f", {x[0]}" for x in lambda_param.array]), "), this);\n"]))
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            #for block in self.blocks:
+            #    f_string = ""
+            #    f_string += "{prefix}fifo_{agent}{array} = new({br_left}\"fifo_{agent}\"{reg_array}{br_right}, this);\n"
+            #    ret_str = block.cmd2string(f_string, False, "\t\t")
+            #    print (ret_str, file = file)
             print (f"\tendfunction", file = file)
             print (f"", file = file)
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
@@ -215,7 +222,7 @@ class uvm_testbench(block):
                 for inf in block.interfaces2inst({}, f_string, "", "", "CLK"):
                     print (f"{inf}", file = file)
             print("", file = file)
-                    
+
             for block in self.blocks:
                 f_string = "{prefix}uvm_config_db#(virtual {inf_type})::set(null, \"\", {{\"vif\" {reg_name} }}, vif{inf_name}{array});\n"
                 inf = block.interfaces2cmd({}, f_string, "\t\t", "", "", "")
