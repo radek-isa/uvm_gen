@@ -15,8 +15,31 @@ Tento modul obsahuje vytváření instancí pro prostředí
 
 class lambda_param:
     def __init__(self, prefix = 0):
-        self.prefix     = prefix;
-        self.array_decl = ""
+        self.prefix = prefix
+        #two items, (ITERATOR, END_OF_ITERATION)
+        self.array  = []
 
-    
+    def print_prefix(self, inc = 0):
+        ret = "";
+        for it in range(0, self.prefix + inc):
+            ret += "\t"
+        return ret
+
+
+    def print_for_start(self):
+        ret = ""
+        for it in self.array:
+            ret += "".join(["\t" for x in range (0, self.prefix)])
+            self.prefix += 1
+            ret += f"for (int unsigned {it[0]}; {it[0]} < {it[1]}; {it[0]}++) begin\n"
+        return ret
+
+    def print_for_end(self):
+        ret = ""
+        for it in self.array:
+            self.prefix -= 1
+            ret += "".join(["\t" for x in range (0, self.prefix)])
+            ret += f"end\n"
+        return ret
+
 

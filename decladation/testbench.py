@@ -23,6 +23,7 @@ class uvm_testbench(block):
         self.files_sv.append("model.sv");
         self.files_sv.append("scoreboard.sv");
         self.files_sv.append("env.sv");
+        self.files_sv.append("sequence.sv");
 
     def create(self, xml):
         return instantiation.uvm_env_top(xml)
@@ -34,6 +35,66 @@ class uvm_testbench(block):
 
         generic_decl   = self._generic_decl();
         generic_assign = self._generic_assign();
+
+        with open(pkg_path / "sequence.sv", 'w') as file:
+            print (uvm_gen_preambule.format(name = "sequence.sv"), file = file)
+            print (f"class sequence_base{generic_decl} extends uvm_sequence;", file = file)
+            print (f"\t`uvm_object_param_utils(uvm_env_top::sequence_base{generic_assign})", file = file)
+            print (f"\t`uvm_declare_p_sequencer(uvm_env_top::sequencer{generic_assign})", file = file)
+            print (f"", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : "\tprotected " +  obj.pkg2string() + "::sequence_lib" + obj.generic2string() + " ")
+                lambda_gen.append(lambda obj, lambda_param : "seq_" + obj.name + "".join([f"[{x[1]}]" for x in lambda_param.array]) + ";\n")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\tfunction new (string name);\n\t\tsuper.new(name);", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"\ttask body();", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "seq_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : " = " + obj.pkg2string() + "::sequence_lib" + obj.generic2string() + " ")
+                lambda_gen.append(lambda obj, lambda_param : "::type_id::create($sformatf(\"seq_" + obj.name + "".join([f"_%0d" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : "\"" + "".join([f", {x[0]}" for x in lambda_param.array]) + "), p_sequencer." + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ");\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"", file = file)
+
+            print (f"// RUN sequncers", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix() + "fork\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+1) + "begin\n")
+                #RANDOMIZE AND RUN SEQUENCE
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+2))
+                lambda_gen.append(lambda obj, lambda_param : "assert(seq_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ".randomize()) else `uvm_fatal(m_sequencer.get_full_name(), \"\\n\\tCannot randomize sequence\");\n")
+
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+2))
+                lambda_gen.append(lambda obj, lambda_param : "seq_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ".start(p_sequencer." + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]) + ");\n")
+
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+1) + "end\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix() + "join_none;\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix() + "#(0);\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"", file = file)
+            print (f"\tendtask", file = file)
+            print (f"", file = file)
+            print (f"endclass", file = file)
+
 
         with open(pkg_path / "sequencer.sv", 'w') as file:
             print (uvm_gen_preambule.format(name = "sequencer.sv"), file = file)
@@ -87,6 +148,21 @@ class uvm_testbench(block):
             print (f"\tfunction new (string name, uvm_component parent = null);\n\t\tsuper.new(name, parent);", file = file)
             print (f"\tendfunction", file = file)
             print (f"", file = file)
+            print (f"\tfunction int unsigned success();", file = file)
+            print (f"\t\tint unsigned ret = 1;", file = file)
+            print (f"\t\tret &= (m_scoreboard.success() != 0);", file = file)
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"", file = file)
+            print (f"\tfunction int unsigned used();", file = file)
+            print (f"\t\tint unsigned ret = 0;", file = file)
+            print (f"\t\tret |= (m_model.used() != 0);", file = file)
+            print (f"\t\tret |= (m_scoreboard.used() != 0);", file = file)
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
             print (f"\t\tm_config = new(); // Just hotfix for now", file = file)
             print (f"\t\tsuper.build_phase(phase);", file = file)
@@ -105,10 +181,26 @@ class uvm_testbench(block):
             print(self._gen_block_reset_connect("\t\t"), file = file)
             print (f"", file = file)
             for block in self.blocks:
-                f_string = ""
-                f_string += "{prefix}{agent}{array}.{analysis_port}.connect(m_model.fifo_{agent}{array}.analysis_export);\n"
-                ret_str = block.cmd2string(f_string, False, "\t\t")
-                print (ret_str, file = file)
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]) + "." + obj.analysis_port(obj.dir) + ".connect(")
+                #RX
+                lambda_gen.append(lambda obj, lambda_param : "m_model.fifo_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array])  if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : ".analysis_export);\n"  if obj.dir ==  instantiation.agent_dir.RX else "")
+                #TX
+                lambda_gen.append(lambda obj, lambda_param : "m_scoreboard.cmp_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array])  if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : ".analysis_imp_dut);\n"  if obj.dir ==  instantiation.agent_dir.TX else "")
+                #TX connct model to DUT
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)])   if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "m_model.port_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]) +  ".connect("   if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "m_scoreboard.cmp_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array])  if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : ".analysis_imp_model);\n"  if obj.dir ==  instantiation.agent_dir.TX else "")
+
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
             print (f"\tendfunction", file = file)
             print (f"endclass", file = file)
 
@@ -118,29 +210,48 @@ class uvm_testbench(block):
             print (f"\t`uvm_component_param_utils(uvm_env_top::model{generic_assign})", file = file)
             print (f"", file = file)
             for block in self.blocks:
-                lambda_param = instantiation.lambda_param;
+                lambda_param = instantiation.lambda_param(1);
                 lambda_gen = [];
-                lambda_gen.append(lambda obj  : "{prefix}")
-                lambda_gen.append(lambda obj  : "uvm_tlm_analysis_fifo" if obj.dir ==  instantiation.agent_dir.RX else "analysis_port")
-                lambda_gen.append(lambda obj  : "#(" + obj.item2string(obj.dir) + ")")
-                lambda_gen.append(lambda obj  : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
-                lambda_gen.append(lambda obj  : obj.name)
-                lambda_gen.append(lambda obj  : "\n")
-                ret_str = block.lambda2string(lambda_gen);
-                print(ret_str)
-                f_string = ""
-                f_string += "{prefix}uvm_tlm_analysis_fifo#({item}) fifo_{agent}{array};\n"
-                ret_str = block.cmd_inst2string(f_string, False, "\t", "")
-                print (ret_str, file = file)
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "uvm_tlm_analysis_fifo" if obj.dir ==  instantiation.agent_dir.RX else "uvm_analysis_port")
+                lambda_gen.append(lambda obj, lambda_param : "#(" + obj.item2string(obj.dir) + ") ")
+                lambda_gen.append(lambda obj, lambda_param : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
+                lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[1]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ";\n")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file,  end='')
             print (f"", file = file)
             print (f"\tfunction new (string name, uvm_component parent = null);\n\t\tsuper.new(name, parent);", file = file)
             for block in self.blocks:
-                f_string = ""
-                f_string += "{prefix}fifo_{agent}{array} = new({br_left}\"fifo_{agent}\"{reg_array}{br_right}, this);\n"
-                ret_str = block.cmd2string(f_string, False, "\t\t")
-                print (ret_str, file = file)
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
+                lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : "".join([" = new($sformatf(\"", "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_", obj.name, "".join([f"_%0d" for x in lambda_param.array]), "\"" ,"".join([f", {x[0]}" for x in lambda_param.array]), "), this);\n"]))
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
             print (f"\tendfunction", file = file)
             print (f"", file = file)
+
+            print (f"\tfunction int unsigned used();", file = file)
+            print (f"\t\tint unsigned ret = 0;", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : "ret |= (fifo_" + obj.name if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + ".used() != 0);\n" if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.RX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
             print (f"\t\tsuper.build_phase(phase);", file = file)
             print (f"\tendfunction", file = file)
@@ -160,21 +271,69 @@ class uvm_testbench(block):
             print (f"\t`uvm_component_param_utils(uvm_env_top::scoreboard{generic_assign})", file = file)
             print (f"", file = file)
             for block in self.blocks:
-                f_string = ""
-                f_string += "{prefix}uvm_common::comparer_ordered#({item}) cmp_{agent}{array};\n"
-                ret_str = block.cmd_inst2string(f_string, False, "\t\t", "")
-                print (ret_str, file = file)
+                lambda_param = instantiation.lambda_param(0);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : "\t"                                 if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "uvm_common::comparer_ordered"         if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "#(" + obj.item2string(obj.dir) + ") " if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "cmp_" + obj.name                      if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[1]}]" for x in lambda_param.array]) + ";" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "\n"                                   if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+
             print (f"", file = file)
             print (f"\tfunction new (string name, uvm_component parent = null);\n\t\tsuper.new(name, parent);", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"\tfunction int unsigned used();", file = file)
+            print (f"\t\tint unsigned ret = 0;", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "ret |= (cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + ".used() != 0);\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"\tfunction int unsigned success();", file = file)
+            print (f"\t\tint unsigned ret = 1;", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "ret &= (cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + ".success() != 0);\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\t\treturn ret;", file = file)
             print (f"\tendfunction", file = file)
             print (f"", file = file)
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
             print (f"\t\tsuper.build_phase(phase);", file = file)
             for block in self.blocks:
-                f_string = ""
-                f_string += "{prefix}cmp_{agent}{array} = uvm_common::comparer_ordered#({item})::type_id::create({br_left}\"cmp_{agent}\"{reg_array}{br_right}, this);\n"
-                ret_str = block.cmd2string(f_string, False, "\t\t")
-                print (ret_str, file = file)
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + " = " if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "uvm_common::comparer_ordered#(" +  obj.item2string(obj.dir) + ")" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "::type_id::create($sformatf(\"cmp_"+ obj.name                     if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["_%0d" for x in lambda_param.array]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "\"" + "".join([f", {x[0]}" for x in lambda_param.array]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "), this);\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+
             print (f"\tendfunction", file = file)
             print (f"", file = file)
             print (f"\tfunction void connect_phase (uvm_phase phase);", file = file)
@@ -184,6 +343,24 @@ class uvm_testbench(block):
             print (f"\ttask run_phase (uvm_phase phase);", file = file)
             print (f"\t\tsuper.run_phase(phase);", file = file)
             print (f"\tendtask", file = file)
+            print (f"", file = file)
+            print (f"\tfunction void report_phase(uvm_phase phase);", file = file)
+            print (f"\t\tstring msg = \"\";", file = file)
+            print (f"\t\tlogic failed = (this.success() == 0 || this.used() == 1) ? 1'b1 : 1'b0;", file = file)
+            print (f"\t\tsuper.report_phase(phase);", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "msg = {msg, cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : ".info(failed)};\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print ("\t\t`uvm_info(this.get_full_name(), msg, UVM_NONE);", file = file)
+            print (f"\tendfunction", file = file)
             print (f"endclass", file = file)
 
         with open(path / "testbench.sv", 'w') as file:
@@ -215,7 +392,7 @@ class uvm_testbench(block):
                 for inf in block.interfaces2inst({}, f_string, "", "", "CLK"):
                     print (f"{inf}", file = file)
             print("", file = file)
-                    
+
             for block in self.blocks:
                 f_string = "{prefix}uvm_config_db#(virtual {inf_type})::set(null, \"\", {{\"vif\" {reg_name} }}, vif{inf_name}{array});\n"
                 inf = block.interfaces2cmd({}, f_string, "\t\t", "", "", "")
@@ -297,12 +474,35 @@ class uvm_testbench(block):
             print (f"\tendfunction", file = file)
             print (f"", file = file)
             print (f"\ttask run_phase (uvm_phase phase);", file = file)
+            print (f"\t\tuvm_env_top::sequence_base{generic_assign} seq;", file = file)
+            print (f"\t\ttime time_start;", file = file)
+            print (f"", file = file)
+            print (f"\t\tseq = uvm_env_top::sequence_base{generic_assign}::type_id::create(\"seq\", m_env.m_sequencer)", file = file)
             print (f"\t\tphase.raise_objection(this);", file = file)
+            print (f"", file = file)
+            print (f"\t\t//RUN SEQUENCES", file = file)
+            print (f"", file = file)
+            print ("\t\tassert(seq.randomize()) else `uvm_fatal(this.get_full_name(), \"\\t\\nCannot randomize sequence\")", file = file)
+            print ("\t\t//seq.start(m_env.m_sequencer)", file = file)
+            print (f"", file = file)
+            print (f"\t\t//WAIT FOR REST OF OUTPUT TRANSACTIONS", file = file)
+            print (f"\t\ttime_start = $time;", file = file)
+            print (f"\t\twhile(m_env.used() != 0 && (time_start + 500us) > $time) begin", file = file)
+            print (f"\t\t\t#(300ns);", file = file)
+            print (f"\t\tend", file = file)
             print (f"\t\tphase.drop_objection(this);", file = file)
             print (f"\tendtask", file = file)
             print (f"", file = file)
             print (f"\tfunction void report_phase(uvm_phase phase);", file = file)
-            print ("\t\t`uvm_info(this.get_full_name(), {\"\\n\\tTEST : \", this.get_type_name(), \" END\\n\"}, UVM_NONE);", file = file)
+            print ("\t\tstring msg = \"\";", file = file)
+            print ("\t\tmsg = {\"\\n\\tTEST : \", this.get_type_name()};", file = file)
+            print (f"", file = file)
+            print ("\t\tmsg = {msg, $sformatf(\"\\n\\tSuccess %0d Used %0d\", m_env.success(), m_env.used())};", file = file)
+            print (f"\t\tif (m_env.success() == 1 && m_env.used() == 0) begin", file = file)
+            print ("\t\t\t`uvm_info(this.get_full_name(), {msg, \"\\n\\n\\t---------------------------------------\\n\\t----     VERIFICATION SUCCESS       ----\\n\\t---------------------------------------\"}, UVM_NONE);", file = file)
+            print (f"\t\tend else begin", file = file)
+            print ("\t\t\t`uvm_info(this.get_full_name(), {msg, \"\\n\\n\\t---------------------------------------\\n\\t----     VERIFICATION FAILED        ----\\n\\t---------------------------------------\"}, UVM_NONE);", file = file)
+            print (f"\t\tend", file = file)
             print (f"\tendfunction", file = file)
             print (f"endclass", file = file)
 

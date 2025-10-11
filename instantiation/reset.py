@@ -22,10 +22,10 @@ class uvm_reset:
         for cfg in xml.find('config'):
             self.cfg[cfg.tag] = cfg.text;
 
-    def lambda2string(self, lambda_fce):
+    def lambda2string(self, lambda_fce, lambda_param):
         ret_str = ""
         for it in lambda_fce:
-            ret_str += it(self)
+            ret_str += it(self, lambda_param)
         return ret_str
 
     def analysis_port(self, direction):

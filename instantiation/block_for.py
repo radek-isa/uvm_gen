@@ -24,12 +24,11 @@ class block_for:
                     agent_class = decl_agents[block.tag].create(block)
                     self.blocks.append(agent_class);
 
-    def lambda2string(self, lambda_fce):
+    def lambda2string(self, lambda_fce, lambda_param):
         ret_str = ""
-        ret_str += f"for (int unsigned {self.iterator} = 0; {self.iterator} < {self.end};  {self.iterator}++) begin\n"
+        lambda_param.array.append((self.iterator, self.end))
         for block in self.blocks:
-            ret_str +=  block.lambda2string(lambda_fce);
-        ret_str += f"end"
+            ret_str +=  block.lambda2string(lambda_fce, lambda_param);
         return ret_str;
 
     # this generate cmd string
