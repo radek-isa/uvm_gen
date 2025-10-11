@@ -23,6 +23,7 @@ class uvm_testbench(block):
         self.files_sv.append("model.sv");
         self.files_sv.append("scoreboard.sv");
         self.files_sv.append("env.sv");
+        self.files_sv.append("sequence.sv");
 
     def create(self, xml):
         return instantiation.uvm_env_top(xml)
@@ -34,6 +35,66 @@ class uvm_testbench(block):
 
         generic_decl   = self._generic_decl();
         generic_assign = self._generic_assign();
+
+        with open(pkg_path / "sequence.sv", 'w') as file:
+            print (uvm_gen_preambule.format(name = "sequence.sv"), file = file)
+            print (f"class sequence_base{generic_decl} extends uvm_sequence;", file = file)
+            print (f"\t`uvm_object_param_utils(uvm_env_top::sequence_base{generic_assign})", file = file)
+            print (f"\t`uvm_declare_p_sequencer(uvm_env_top::sequencer{generic_assign})", file = file)
+            print (f"", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : "\tprotected " +  obj.pkg2string() + "::sequence_lib" + obj.generic2string() + " ")
+                lambda_gen.append(lambda obj, lambda_param : "seq_" + obj.name + "".join([f"[{x[1]}]" for x in lambda_param.array]) + ";\n")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\tfunction new (string name);\n\t\tsuper.new(name);", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"\ttask body();", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "seq_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : " = " + obj.pkg2string() + "::sequence_lib" + obj.generic2string() + " ")
+                lambda_gen.append(lambda obj, lambda_param : "::type_id::create($sformatf(\"seq_" + obj.name + "".join([f"_%0d" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : "\"" + "".join([f", {x[0]}" for x in lambda_param.array]) + "), p_sequencer." + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ");\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"", file = file)
+
+            print (f"// RUN sequncers", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix() + "fork\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+1) + "begin\n")
+                #RANDOMIZE AND RUN SEQUENCE
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+2))
+                lambda_gen.append(lambda obj, lambda_param : "assert(seq_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ".randomize()) else `uvm_fatal(m_sequencer.get_full_name(), \"\\n\\tCannot randomize sequence\");\n")
+
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+2))
+                lambda_gen.append(lambda obj, lambda_param : "seq_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
+                lambda_gen.append(lambda obj, lambda_param : ".start(p_sequencer." + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]) + ");\n")
+
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix(+1) + "end\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix() + "join_none;\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_prefix() + "#(0);\n")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end())
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"", file = file)
+            print (f"\tendtask", file = file)
+            print (f"", file = file)
+            print (f"endclass", file = file)
+
 
         with open(pkg_path / "sequencer.sv", 'w') as file:
             print (uvm_gen_preambule.format(name = "sequencer.sv"), file = file)
@@ -413,7 +474,22 @@ class uvm_testbench(block):
             print (f"\tendfunction", file = file)
             print (f"", file = file)
             print (f"\ttask run_phase (uvm_phase phase);", file = file)
+            print (f"\t\tuvm_env_top::sequence_base{generic_assign} seq;", file = file)
+            print (f"\t\ttime time_start;", file = file)
+            print (f"", file = file)
+            print (f"\t\tseq = uvm_env_top::sequence_base{generic_assign}::type_id::create(\"seq\", m_env.m_sequencer)", file = file)
             print (f"\t\tphase.raise_objection(this);", file = file)
+            print (f"", file = file)
+            print (f"\t\t//RUN SEQUENCES", file = file)
+            print (f"", file = file)
+            print ("\t\tassert(seq.randomize()) else `uvm_fatal(this.get_full_name(), \"\\t\\nCannot randomize sequence\")", file = file)
+            print ("\t\t//seq.start(m_env.m_sequencer)", file = file)
+            print (f"", file = file)
+            print (f"\t\t//WAIT FOR REST OF OUTPUT TRANSACTIONS", file = file)
+            print (f"\t\ttime_start = $time;", file = file)
+            print (f"\t\twhile(m_env.used() != 0 && (time_start + 500us) > $time) begin", file = file)
+            print (f"\t\t\t#(300ns);", file = file)
+            print (f"\t\tend", file = file)
             print (f"\t\tphase.drop_objection(this);", file = file)
             print (f"\tendtask", file = file)
             print (f"", file = file)
