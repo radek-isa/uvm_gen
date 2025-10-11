@@ -87,6 +87,21 @@ class uvm_testbench(block):
             print (f"\tfunction new (string name, uvm_component parent = null);\n\t\tsuper.new(name, parent);", file = file)
             print (f"\tendfunction", file = file)
             print (f"", file = file)
+            print (f"\tfunction int unsigned success();", file = file)
+            print (f"\t\tint unsigned ret = 1;", file = file)
+            print (f"\t\tret &= (m_scoreboard.success() != 0);", file = file)
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"", file = file)
+            print (f"\tfunction int unsigned used();", file = file)
+            print (f"\t\tint unsigned ret = 0;", file = file)
+            print (f"\t\tret |= (m_model.used() != 0);", file = file)
+            print (f"\t\tret |= (m_scoreboard.used() != 0);", file = file)
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
             print (f"\t\tm_config = new(); // Just hotfix for now", file = file)
             print (f"\t\tsuper.build_phase(phase);", file = file)
@@ -159,6 +174,23 @@ class uvm_testbench(block):
                 print (ret_str, file = file, end='')
             print (f"\tendfunction", file = file)
             print (f"", file = file)
+
+            print (f"\tfunction int unsigned used();", file = file)
+            print (f"\t\tint unsigned ret = 0;", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : "ret |= (fifo_" + obj.name if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + ".used() != 0);\n" if obj.dir ==  instantiation.agent_dir.RX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.RX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
             print (f"\t\tsuper.build_phase(phase);", file = file)
             print (f"\tendfunction", file = file)
