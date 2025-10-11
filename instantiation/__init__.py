@@ -19,6 +19,13 @@ class lambda_param:
         #two items, (ITERATOR, END_OF_ITERATION)
         self.array  = []
 
+    def print_prefix(self, inc = 0):
+        ret = "";
+        for it in range(0, self.prefix + inc):
+            ret += "\t"
+        return ret
+
+
     def print_for_start(self):
         ret = ""
         for it in self.array:
