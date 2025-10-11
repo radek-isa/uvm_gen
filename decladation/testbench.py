@@ -282,6 +282,24 @@ class uvm_testbench(block):
             print (f"\ttask run_phase (uvm_phase phase);", file = file)
             print (f"\t\tsuper.run_phase(phase);", file = file)
             print (f"\tendtask", file = file)
+            print (f"", file = file)
+            print (f"\tfunction void report_phase(uvm_phase phase);", file = file)
+            print (f"\t\tstring msg = \"\";", file = file)
+            print (f"\t\tlogic failed = (this.success() == 0 || this.used() == 1) ? 1'b1 : 1'b0;", file = file)
+            print (f"\t\tsuper.report_phase(phase);", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "msg = {msg, cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : ".info(failed)};\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print ("\t\t`uvm_info(this.get_full_name(), msg, UVM_NONE);", file = file)
+            print (f"\tendfunction", file = file)
             print (f"endclass", file = file)
 
         with open(path / "testbench.sv", 'w') as file:
