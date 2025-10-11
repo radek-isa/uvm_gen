@@ -22,7 +22,7 @@ class lambda_param:
     def print_for_start(self):
         ret = ""
         for it in self.array:
-            ret += "".join(["    " for x in range (0, self.prefix)]) 
+            ret += "".join(["\t" for x in range (0, self.prefix)])
             self.prefix += 1
             ret += f"for (int unsigned {it[0]}; {it[0]} < {it[1]}; {it[0]}++) begin\n"
         return ret
@@ -31,7 +31,7 @@ class lambda_param:
         ret = ""
         for it in self.array:
             self.prefix -= 1
-            ret += "".join(["    " for x in range (0, self.prefix)]) 
+            ret += "".join(["\t" for x in range (0, self.prefix)])
             ret += f"end\n"
         return ret
 

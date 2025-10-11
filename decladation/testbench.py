@@ -108,7 +108,7 @@ class uvm_testbench(block):
                 lambda_param = instantiation.lambda_param(2);
                 lambda_gen = [];
                 lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
-                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
                 lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]) + "." + obj.analysis_port(obj.dir) + ".connect(")
                 #RX
                 lambda_gen.append(lambda obj, lambda_param : "m_model.fifo_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array])  if obj.dir ==  instantiation.agent_dir.RX else "")
@@ -117,7 +117,7 @@ class uvm_testbench(block):
                 lambda_gen.append(lambda obj, lambda_param : "m_scoreboard.cmp_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array])  if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : ".analysis_imp_dut);\n"  if obj.dir ==  instantiation.agent_dir.TX else "")
                 #TX connct model to DUT
-                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)])   if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)])   if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "m_model.port_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]) +  ".connect("   if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "m_scoreboard.cmp_" + obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array])  if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : ".analysis_imp_model);\n"  if obj.dir ==  instantiation.agent_dir.TX else "")
@@ -136,7 +136,7 @@ class uvm_testbench(block):
             for block in self.blocks:
                 lambda_param = instantiation.lambda_param(1);
                 lambda_gen = [];
-                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
                 lambda_gen.append(lambda obj, lambda_param : "uvm_tlm_analysis_fifo" if obj.dir ==  instantiation.agent_dir.RX else "uvm_analysis_port")
                 lambda_gen.append(lambda obj, lambda_param : "#(" + obj.item2string(obj.dir) + ") ")
                 lambda_gen.append(lambda obj, lambda_param : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
@@ -150,7 +150,7 @@ class uvm_testbench(block):
                 lambda_param = instantiation.lambda_param(2);
                 lambda_gen = [];
                 lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start())
-                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)]))
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]))
                 lambda_gen.append(lambda obj, lambda_param : "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_")
                 lambda_gen.append(lambda obj, lambda_param : obj.name + "".join([f"[{x[0]}]" for x in lambda_param.array]))
                 lambda_gen.append(lambda obj, lambda_param : "".join([" = new($sformatf(\"", "fifo_" if obj.dir ==  instantiation.agent_dir.RX else "port_", obj.name, "".join([f"_%0d" for x in lambda_param.array]), "\"" ,"".join([f", {x[0]}" for x in lambda_param.array]), "), this);\n"]))
@@ -180,7 +180,7 @@ class uvm_testbench(block):
             for block in self.blocks:
                 lambda_param = instantiation.lambda_param(0);
                 lambda_gen = [];
-                lambda_gen.append(lambda obj, lambda_param : "    "                                 if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "\t"                                 if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "uvm_common::comparer_ordered"         if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "#(" + obj.item2string(obj.dir) + ") " if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "cmp_" + obj.name                      if obj.dir ==  instantiation.agent_dir.TX else "")
@@ -193,13 +193,43 @@ class uvm_testbench(block):
             print (f"\tfunction new (string name, uvm_component parent = null);\n\t\tsuper.new(name, parent);", file = file)
             print (f"\tendfunction", file = file)
             print (f"", file = file)
+            print (f"\tfunction int unsigned used();", file = file)
+            print (f"\t\tint unsigned ret = 0;", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "ret |= (cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + ".used() != 0);\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
+            print (f"\tfunction int unsigned success();", file = file)
+            print (f"\t\tint unsigned ret = 1;", file = file)
+            for block in self.blocks:
+                lambda_param = instantiation.lambda_param(2);
+                lambda_gen = [];
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "ret &= (cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + ".success() != 0);\n" if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_end() if obj.dir ==  instantiation.agent_dir.TX else "")
+                ret_str = block.lambda2string(lambda_gen, lambda_param);
+                print (ret_str, file = file, end='')
+            print (f"\t\treturn ret;", file = file)
+            print (f"\tendfunction", file = file)
+            print (f"", file = file)
             print (f"\tfunction void build_phase (uvm_phase phase);", file = file)
             print (f"\t\tsuper.build_phase(phase);", file = file)
             for block in self.blocks:
                 lambda_param = instantiation.lambda_param(2);
                 lambda_gen = [];
                 lambda_gen.append(lambda obj, lambda_param : lambda_param.print_for_start() if obj.dir ==  instantiation.agent_dir.TX else "")
-                lambda_gen.append(lambda obj, lambda_param : "".join(["    " for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
+                lambda_gen.append(lambda obj, lambda_param : "".join(["\t" for x in range (0, lambda_param.prefix)]) if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "cmp_" + obj.name if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "".join([f"[{x[0]}]" for x in lambda_param.array]) + " = " if obj.dir ==  instantiation.agent_dir.TX else "")
                 lambda_gen.append(lambda obj, lambda_param : "uvm_common::comparer_ordered#(" +  obj.item2string(obj.dir) + ")" if obj.dir ==  instantiation.agent_dir.TX else "")
