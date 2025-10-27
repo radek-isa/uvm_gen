@@ -3,7 +3,6 @@
 import os
 
 from .block    import block
-from .constant import uvm_gen_preambule
 
 from . import files
 import instantiation

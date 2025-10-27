@@ -1,6 +1,6 @@
 #!/bin/python3
 
-from .constant import *
+import base
 
 class uvm_env:
 
@@ -12,7 +12,7 @@ class uvm_env:
         self.type     = type_class;
         self.pkg_name = xml.tag
         self.name  = xml.get("name")
-        self.dir   = str2agent_dir(xml.get("dir"))
+        self.dir   = base.str2agent_dir(xml.get("dir"))
         self.reset = xml.get("reset")
         self.meta_behav = "META_NONE"
 
@@ -64,10 +64,10 @@ class uvm_env:
         return f"uvm_{self.pkg_name}"
 
     def type2string(self, direction):
-        tmp_dir = agent_dir_get(self.dir, direction)
-        if (tmp_dir == agent_dir.RX):
+        tmp_dir = base.agent_dir_get(self.dir, direction)
+        if (tmp_dir == base.agent_dir.RX):
             return f"uvm_{self.pkg_name}::env_rx{self.generic2string()}"
-        elif (tmp_dir == agent_dir.TX):
+        elif (tmp_dir == base.agent_dir.TX):
             return f"uvm_{self.pkg_name}::env_tx{self.generic2string()}"
         else:
             return f"uvm_{self.pkg_name}::{direction}{self.generic2string()}"
@@ -80,14 +80,14 @@ class uvm_env:
 
     def interfaces2inst(self, cfg, f_string, name, array, clk):
         ret = []
-        block_cfg = cfg_substitute(cfg, self.generics);
+        block_cfg = base.cfg_substitute(cfg, self.generics);
         for inf in self.type.blocks:
             ret += inf.interfaces2inst(block_cfg, f_string, name + "_" + self.name, array, clk);
         return ret
 
     def interfaces2cmd(self, cfg, f_string, prefix, reg_name, name, array):
         ret = ""
-        block_cfg = cfg_substitute(cfg, self.generics);
+        block_cfg = base.cfg_substitute(cfg, self.generics);
         reg_name = reg_name + ", \"_" + self.name + "\""
         name     = name + "_" + self.name
         for inf in self.type.blocks:

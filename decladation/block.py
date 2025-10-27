@@ -2,12 +2,12 @@
 
 import os
 
-from .constant import uvm_gen_preambule
 import instantiation
+from . import files
 
 class block:
     """
-        This class is base class for block like uvm_env and testbench 
+        This class is base class for block like uvm_env and testbench
     """
 
     def __init__(self, xml, decl_agents):
@@ -91,7 +91,7 @@ class block:
             os.makedirs(pkg_path)
 
         with open(pkg_path / "pkg.sv", 'w') as file:
-            print (uvm_gen_preambule.format(name = "pkg.sv"), file = file)
+            print (files.sv.constant.uvm_gen_preambule.format(name = "pkg.sv"), file = file)
             print (f"package uvm_{name};", file = file)
             print (f"", file = file);
             print (f"\timport uvm_pkg::*;", file = file)

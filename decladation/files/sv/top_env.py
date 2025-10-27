@@ -5,6 +5,7 @@ import os
 
 from .constant   import uvm_gen_preambule
 import instantiation
+import base
 
 class top_env:
     """
@@ -67,10 +68,10 @@ class top_env:
         ret = ""
         ret += lambda_param.print_for_start()
         prefix  = lambda_param.print_prefix()
-        if (obj.dir ==  instantiation.agent_dir.RX):
+        if (obj.dir ==  base.agent_dir.RX):
             ret += f"{prefix}{obj.name}{array}.{obj.analysis_port(direction)}.connect("
             ret += f"m_model.fifo_{obj.name}{array}.analysis_export);\n"
-        elif (obj.dir ==  instantiation.agent_dir.TX):
+        elif (obj.dir ==  base.agent_dir.TX):
             ret += f"{prefix}{obj.name}{array}.{obj.analysis_port(direction)}.connect("
             ret += f"m_scoreboard.cmp_{obj.name}{array}.analysis_imp_dut);\n"
 

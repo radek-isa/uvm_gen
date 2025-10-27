@@ -1,6 +1,5 @@
 #!/bin/python3
 
-from .constant               import *
 from .env                    import uvm_env
 from .dut                    import uvm_dut
 

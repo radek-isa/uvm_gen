@@ -5,6 +5,7 @@ import os
 
 from .constant   import uvm_gen_preambule
 import instantiation
+import base
 
 class model:
     """
@@ -24,9 +25,9 @@ class model:
         array  = "".join([f"[{x[1]}]" for x in lambda_param.array])
 
         ret = ""
-        if (obj.dir ==  instantiation.agent_dir.RX):
+        if (obj.dir ==  base.agent_dir.RX):
             ret += f"{prefix}uvm_tlm_analysis_fifo#({obj.item2string(direction)}) fifo_{obj.name}{array};\n"
-        elif (obj.dir ==  instantiation.agent_dir.TX):
+        elif (obj.dir ==  base.agent_dir.TX):
             ret += f"{prefix}uvm_analysis_port    #({obj.item2string(direction)}) port_{obj.name}{array};\n"
         return ret;
 
@@ -45,9 +46,9 @@ class model:
         ret = ""
         ret += lambda_param.print_for_start()
         prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
-        if (obj.dir ==  instantiation.agent_dir.RX):
+        if (obj.dir ==  base.agent_dir.RX):
             ret += f"{prefix}fifo_{obj.name}{array} = new({{\"fifo_{obj.name}\"{reg_name_arr}}}, this);\n";
-        elif (obj.dir ==  instantiation.agent_dir.TX):
+        elif (obj.dir ==  base.agent_dir.TX):
             ret += f"{prefix}port_{obj.name}{array} = new({{\"port_{obj.name}\"{reg_name_arr}}}, this);\n";
         ret += lambda_param.print_for_end()
         return ret;
@@ -58,7 +59,7 @@ class model:
         array  = "".join([f"[{x[0]}]" for x in lambda_param.array])
 
         ret = ""
-        if (obj.dir ==  instantiation.agent_dir.RX):
+        if (obj.dir ==  base.agent_dir.RX):
             ret += lambda_param.print_for_start()
             prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
             ret += f"{prefix}ret |= (fifo_{obj.name}{array}.used() != 0);\n"

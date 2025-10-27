@@ -5,6 +5,7 @@ import os
 
 from .constant   import uvm_gen_preambule
 import instantiation
+import base
 
 class scoreboard:
     """
@@ -24,7 +25,7 @@ class scoreboard:
         prefix = "\t";
 
         ret = "";
-        if (obj.dir ==  instantiation.agent_dir.TX):
+        if (obj.dir ==  base.agent_dir.TX):
             ret += f"{prefix}uvm_common::comparer_ordered#({obj.item2string(obj.dir)}) cmp_{obj.name}{array};\n"
         return ret
 
@@ -34,7 +35,7 @@ class scoreboard:
         array  = "".join([f"[{x[0]}]" for x in lambda_param.array])
 
         ret = ""
-        if (obj.dir ==  instantiation.agent_dir.TX):
+        if (obj.dir ==  base.agent_dir.TX):
             ret += lambda_param.print_for_start()
             prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
             ret += f"{prefix}ret |= (cmp_{obj.name}{array}.used() != 0);\n"
@@ -47,7 +48,7 @@ class scoreboard:
         array  = "".join([f"[{x[0]}]" for x in lambda_param.array])
 
         ret = ""
-        if (obj.dir ==  instantiation.agent_dir.TX):
+        if (obj.dir ==  base.agent_dir.TX):
             ret += lambda_param.print_for_start()
             prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
             ret += f"{prefix}ret &= (cmp_{obj.name}{array}.success() != 0);\n"
@@ -67,7 +68,7 @@ class scoreboard:
             reg_name_arr += ")"
 
         ret = ""
-        if (obj.dir ==  instantiation.agent_dir.TX):
+        if (obj.dir ==  base.agent_dir.TX):
             ret += lambda_param.print_for_start();
             prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
             ret += f"{prefix}cmp_{obj.name}{array} = uvm_common::comparer_ordered#({obj.item2string(False)})"
@@ -89,7 +90,7 @@ class scoreboard:
             reg_name_arr += ")"
 
         ret = ""
-        if (obj.dir ==  instantiation.agent_dir.TX):
+        if (obj.dir ==  base.agent_dir.TX):
             ret += lambda_param.print_for_start();
             prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
             ret += f"{prefix}msg = {{msg, cmp_{obj.name}{array}.info(failed)}};\n"
