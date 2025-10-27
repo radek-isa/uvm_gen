@@ -4,7 +4,7 @@
 class uvm_dut:
     
     """
-        This class represent instantionation of uvm_logic_vector_array_mfb. 
+        This class represent instantionation of DUT 
     """
 
     def __init__(self, xml):

@@ -6,12 +6,6 @@ import os
 
 import decladation
 
-#from enum import Enum
-#
-#class direction(Enum):
-#    NORMAL  = 1
-#    REVERSE = 2
-
 
 class uvm_gen:
     """

@@ -41,54 +41,6 @@ class uvm_env:
     def analysis_port(self, direction):
         return "analysis_port"
 
-    # this generate cmd string
-    # semicolon is added by last agent
-    # f_string containst variable {agent} {item} {prefix}
-    def cmd2string(self, f_string, direction, prefix):
-        config =""
-        #config += f"{prefix}cfg.interface_name = {{m_config.interface_name, \"AAA\", \"_{self.name}\" }};\n"
-        for cfg in self.cfg:
-            config += f"{prefix}cfg.{cfg} = {self.cfg[cfg]};\n"
-
-        return f_string.format(
-                    prefix = prefix,
-                    item = self.item2string(direction),
-                    array = "",
-                    reg_array = "",
-                    br_left    = "{",
-                    br_right   = "}",
-                    agent = self.name,
-                    type_name = self.type2string(direction),
-                    generic_assign = self.generic2string(),
-                    cfg = config,
-                    analysis_port = self.analysis_port(direction),
-                    pkg = self.pkg2string(),
-                )
-
-    def cmd_inst2string(self, f_string, direction, prefix, array):
-        #config =""
-        #for cfg in self.cfg:
-        #    config += f"{prefix}cfg.{cfg} = {self.cfg[cfg]};\n"
-
-        return f_string.format(
-                    prefix = prefix,
-                    item = self.item2string(direction),
-                    array = array,
-                    agent = self.name,
-                    type_name = self.type2string(direction),
-                    generic_assign = self.generic2string(),
-                    #cfg = config,
-                    analysis_port = self.analysis_port(direction),
-                    pkg = self.pkg2string()
-                )
-
-    def inf_inst2string(self, f_string, name, prefix, array):
-        config =""
-        ret_str = ""
-        #for inf in self.interfaces:
-        #        ret_str += block.inf_inst2string(f_string, name + "_" + self.name, prefix, array)
-        return ret_str
-
     def reset2string(self, f_string, prefix, array):
         reset_connet = f"{self.reset}.sync_connect" if self.reset != None else "reset_sync.push_back"
         return f_string.format(
@@ -120,6 +72,9 @@ class uvm_env:
             return f"uvm_{self.pkg_name}::env_tx{self.generic2string()}"
         else:
             return f"uvm_{self.pkg_name}::{direction}{self.generic2string()}"
+
+    def sequence2string(self, direction):
+        return f"uvm_{self.pkg_name}::sequence_lib{self.generic2string()}"
 
     def item2string(self, direction):
         return f"uvm_{self.pkg_name}::sequence_item{self.generic2string()}"

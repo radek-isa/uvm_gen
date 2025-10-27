@@ -31,48 +31,12 @@ class block_for:
             ret_str +=  block.lambda2string(lambda_fce, lambda_param);
         return ret_str;
 
-    # this generate cmd string
-    # semicolon is added by last agent
-    # f_string containst variable {agent} {item} {prefix}
-    #def cmd2string(self, f_string, direction, prefix, array):
-    def cmd2string(self, f_string, direction, prefix):
-        new_f_string = f_string.format(
-                    prefix     = "{prefix}\t",
-                    item       = "{item}",
-                    array      =  f"[{self.iterator}]" + "{array}",
-                    reg_array  =  f", $sformatf(\"_%0d\", {self.iterator})" + "{reg_array}",
-                    br_left    = "{br_left}",
-                    br_right   = "{br_right}",
-                    agent      = "{agent}",
-                    type_name  = "{type_name}",
-                    generic_assign = "{generic_assign}",
-                    cfg        = "{cfg}",
-                    analysis_port = "{analysis_port}",
-                    pkg        = "{pkg}"
-                )
-        ret_str = ""
-        ret_str += f"{prefix}for (int unsigned {self.iterator} = 0; {self.iterator} < {self.end};  {self.iterator}++) begin\n"
-        for block in self.blocks:
-            ret_str +=  block.cmd2string(new_f_string, direction, prefix);
-        ret_str += f"{prefix}end"
-        return ret_str;
 
     def generic2string(self):
         return f""
 
     def type2string(self, direction):
         return f"//for loop "
-
-    def cmd_inst2string(self, f_string, direction, prefix, array):
-        ret_str = ""
-        new_array  = f"{array}[{self.end}]"
-        for block in self.blocks:
-            ret_str += block.cmd_inst2string(f_string, direction, prefix, new_array);
-        return ret_str;
-       
-        #ret += f"\t\tfor\n"
-        #ret += f"\t\tend"
-        #return ret 
 
     def reset2string(self, f_string, prefix, array):
         new_array  = f"{array}[{self.iterator}]"

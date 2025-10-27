@@ -41,15 +41,6 @@ class uvm_logic_vector_array_mfb:
     def analysis_port(self, direction):
         return "analysis_port_data"
 
-    # this generate cmd string
-    # semicolon is added by last agent
-    # f_string containst variable {agent} {item} {prefix}
-    #def cmd2string(self, f_string, direction, prefix = ""):
-    #    ret_str = ""
-    #    ret_str +=  f_string.format(agent = self.name, item = self.item2string(direction), prefix = prefix)
-    #    ret_str += ";"
-    #    return ret_str;
-
     def generic2string(self):
         generic = self.generics["REGIONS"]
         generic += "," + self.generics["REGION_SIZE"]
@@ -70,46 +61,18 @@ class uvm_logic_vector_array_mfb:
         else:
             return f"uvm_logic_vector_array_mfb::{direction}{self.generic2string()}"
 
+    def sequence2string(self, direction):
+        tmp_dir = agent_dir_get(self.dir, direction)
+        if (tmp_dir == agent_dir.RX):
+            return f"uvm_logic_vector_array::sequence_lib{self.generics[ITEM_WIDTH]}"
+        elif (tmp_dir == agent_dir.TX):
+            return f"uvm_mfb::sequence_lib_tx{self.generic2string()}"
+        else:
+            return None 
+
     def item2string(self, direction):
         generic = self.generics["ITEM_WIDTH"]
         return f"uvm_logic_vector_array::sequence_item#({generic})"
-
-    def cmd2string(self, f_string, direction, prefix):
-        config =""
-        for cfg in self.cfg:
-            config += f"{prefix}cfg.{cfg} = {self.cfg[cfg]};\n"
-
-        return f_string.format(
-                    prefix = prefix,
-                    item = self.item2string(direction),
-                    array = "",
-                    reg_array = "",
-                    br_left    = "{",
-                    br_right   = "}",
-                    agent = self.name,
-                    type_name = self.type2string(direction),
-                    generic_assign = self.generic2string(),
-                    cfg = config,
-                    analysis_port = self.analysis_port(direction),
-                    pkg = self.pkg2string()
-                )
-
-    def cmd_inst2string(self, f_string, direction, prefix, array):
-        #config =""
-        #for cfg in self.cfg:
-        #    config += f"{prefix}cfg.{cfg} = {self.cfg[cfg]};\n"
-
-        return f_string.format(
-                    prefix = prefix,
-                    item = self.item2string(direction),
-                    array = array,
-                    agent = self.name,
-                    type_name = self.type2string(direction),
-                    generic_assign = self.generic2string(),
-                    #cfg = config,
-                    analysis_port = self.analysis_port(direction),
-                    pkg = self.pkg2string()
-                )
 
     def reset2string(self, f_string, prefix, array):
         reset_connet = f"{self.reset}.sync_connect" if self.reset != None else "reset_sync.push_back"

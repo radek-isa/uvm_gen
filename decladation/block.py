@@ -48,29 +48,6 @@ class block:
         raise Exception("Sorry this is not defined")
         return None
 
-    def _gen_block_reset_connect(self, prefix):
-        for block in self.blocks:
-            f_string = ""
-            f_string += "{prefix}{reset_connet}({agent}{array}.reset_sync);\n"
-            ret_str = block.reset2string(f_string, "\t\t", "")
-        return ret_str;
-
-    def _gen_block_create(self, direction ,prefix):
-        ret = "";
-        for block in self.blocks:
-            f_string = ""
-            f_string += "{prefix}begin\n"
-            f_string += "{prefix}\t{pkg}::config_item cfg;\n"
-            f_string += "{prefix}\tcfg = new();\n"
-            f_string += "{prefix}\tcfg.interface_name = {br_left}m_config.interface_name{reg_array}, \"_{agent}\" {br_right};\n"
-            f_string += "{cfg}\n"
-            f_string += "\n"
-            f_string += "{prefix}\tuvm_config_db#({pkg}::config_item)::set(this, {br_left}\"{agent}\"{reg_array}{br_right}, \"m_config\", cfg);\n"
-            f_string += "{prefix}\t{agent}{array} = {type_name}::type_id::create({br_left}\"{agent}\"{reg_array}{br_right}, this);\n"
-            f_string += "{prefix}end\n"
-            ret += block.cmd2string(f_string, direction, prefix)
-        return ret
-
     def agents_get(self, agents):
         for block in self.blocks:
             block.agents_get(agents)
