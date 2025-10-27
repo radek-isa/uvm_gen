@@ -5,12 +5,12 @@ import pathlib
 import os
 
 import decladation
-
+import engine
 
 class uvm_gen:
     """
         This class should generate uvm verification environment from XML description file.
-        For run verification is required ndk-fpga from CESNET. This program is not for 
+        For run verification is required ndk-fpga from CESNET. This program is not for
         automatic generation. This program servers for generating first implementation (prototype)
         of verification environment.
     """
@@ -22,12 +22,7 @@ class uvm_gen:
         # Divide Instantiation of agents and creation of new agents (DON'T Forget)
 
         # agents definitions
-        self.agents    = {}
-        # base environments
-        # what if someohne put reset agent to new environment
-        self.agents["reset"]                  = decladation.uvm_reset();
-        self.agents["logic_vector_array_mfb"] = decladation.uvm_logic_vector_array_mfb();
-        self.agents["logic_vector_mvb"]       = decladation.uvm_logic_vector_mvb();
+        self.agents    = engine.CESNET.init()
         #create new environment
         for env_new in xml_root.findall('envs/new'):
             self.agents[env_new.get("name")] = decladation.uvm_env(env_new, self.agents);

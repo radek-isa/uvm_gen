@@ -67,14 +67,17 @@ class top_env:
         ret = ""
         ret += lambda_param.print_for_start()
         prefix  = lambda_param.print_prefix()
-        ret += f"{prefix}{obj.name}{array}.{obj.analysis_port(direction)}.connect("
         if (obj.dir ==  instantiation.agent_dir.RX):
+            ret += f"{prefix}{obj.name}{array}.{obj.analysis_port(direction)}.connect("
             ret += f"m_model.fifo_{obj.name}{array}.analysis_export);\n"
         elif (obj.dir ==  instantiation.agent_dir.TX):
+            ret += f"{prefix}{obj.name}{array}.{obj.analysis_port(direction)}.connect("
             ret += f"m_scoreboard.cmp_{obj.name}{array}.analysis_imp_dut);\n"
 
             ret += f"{prefix}m_model.port_{obj.name}{array}.connect("
             ret += f"m_scoreboard.cmp_{obj.name}{array}.analysis_imp_model);\n"
+        else:
+            ret += ""
         ret += lambda_param.print_for_end()
         return ret
 

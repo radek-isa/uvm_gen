@@ -8,7 +8,6 @@ class uvm_env:
         This class represent instantionation of uvm_env.
     """
 
-#    def __init__(self, xml, interfaces):
     def __init__(self, type_class, xml):
         self.type     = type_class;
         self.pkg_name = xml.tag
@@ -85,7 +84,7 @@ class uvm_env:
         for inf in self.type.blocks:
             ret += inf.interfaces2inst(block_cfg, f_string, name + "_" + self.name, array, clk);
         return ret
-   
+
     def interfaces2cmd(self, cfg, f_string, prefix, reg_name, name, array):
         ret = ""
         block_cfg = cfg_substitute(cfg, self.generics);

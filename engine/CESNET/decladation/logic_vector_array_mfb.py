@@ -1,6 +1,6 @@
 #!/bin/python3
 
-import instantiation
+from .. import instantiation
 
 class uvm_logic_vector_array_mfb:
     """

@@ -1,6 +1,6 @@
 #!/bin/python3
 
-from .constant import *
+import base
 
 class uvm_reset:
     
@@ -10,7 +10,7 @@ class uvm_reset:
 
     def __init__(self, type_class, xml):
         # get direction
-        self.dir =  agent_dir.RX
+        self.dir =  base.agent_dir.RX
         #self.dir = xml.get("dir") 
 
         # load interface name
@@ -41,8 +41,8 @@ class uvm_reset:
         return f"uvm_reset::agent"
 
     def sequence2string(self, direction):
-        tmp_dir = agent_dir_get(self.dir, direction)
-        if (tmp_dir == agent_dir.RX):
+        tmp_dir = base.agent_dir_get(self.dir, direction)
+        if (tmp_dir == base.agent_dir.RX):
             return f"uvm_reset::sequence_start"
         else:
             return None
