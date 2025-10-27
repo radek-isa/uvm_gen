@@ -1,6 +1,6 @@
 #!/bin/python3
 
-from .constant import *
+import base
 
 class uvm_reset:
     
@@ -10,7 +10,7 @@ class uvm_reset:
 
     def __init__(self, type_class, xml):
         # get direction
-        self.dir =  agent_dir.RX
+        self.dir =  base.agent_dir.RX
         #self.dir = xml.get("dir") 
 
         # load interface name
@@ -40,45 +40,15 @@ class uvm_reset:
     def type2string(self, direction):
         return f"uvm_reset::agent"
 
+    def sequence2string(self, direction):
+        tmp_dir = base.agent_dir_get(self.dir, direction)
+        if (tmp_dir == base.agent_dir.RX):
+            return f"uvm_reset::sequence_start"
+        else:
+            return None
+
     def item2string(self, direction):
         return f"uvm_reset::sequence_item"
-
-    def cmd2string(self, f_string, direction, prefix):
-        config =""
-        for cfg in self.cfg:
-            config += f"{prefix}cfg.{cfg} = {self.cfg[cfg]};\n"
-
-        return f_string.format(
-                    prefix = prefix,
-                    item = self.item2string(direction),
-                    array = "",
-                    reg_array = "",
-                    br_left    = "{",
-                    br_right   = "}",
-                    agent = self.name,
-                    type_name = self.type2string(direction),
-                    generic_assign = self.generic2string(),
-                    cfg = config,
-                    analysis_port = self.analysis_port(direction),
-                    pkg = self.pkg2string()
-                )
-
-    def cmd_inst2string(self, f_string, direction, prefix, array):
-        #config =""
-        #for cfg in self.cfg:
-        #    config += f"{prefix}cfg.{cfg} = {self.cfg[cfg]};\n"
-
-        return f_string.format(
-                    prefix = prefix,
-                    item = self.item2string(direction),
-                    array = array,
-                    agent = self.name,
-                    type_name = self.type2string(direction),
-                    generic_assign = self.generic2string(),
-                    #cfg = config,
-                    analysis_port = self.analysis_port(direction),
-                    pkg = self.pkg2string()
-                )
 
     def inf_inst2string(self, f_string, prefix, array):
         return f_string.format(

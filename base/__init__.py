@@ -1,5 +1,6 @@
 #!/bin/python3
 
+#from .constant import *
 
 from enum import Enum
 import re
@@ -41,5 +42,4 @@ def cfg_substitute(cfg, subs):
             new_item = re.sub(f"\\b{jt}\\b", f"({cfg[jt]})", new_item)
         new_cfg[it] = new_item
     return new_cfg
-
 
