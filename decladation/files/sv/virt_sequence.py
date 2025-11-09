@@ -23,7 +23,8 @@ class virt_sequence:
         array  = "".join([f"[{x[1]}]" for x in lambda_param.array])
 
         ret = ""
-        ret += f"{prefix}protected {obj.sequence2string(False)} seq_{obj.name}{array};\n"
+        if (obj.sequence2string(False) != None):
+            ret += f"{prefix}protected {obj.sequence2string(False)} seq_{obj.name}{array};\n"
         return ret
 
     @staticmethod
@@ -38,11 +39,12 @@ class virt_sequence:
             reg_name_arr += ")"
 
         ret = ""
-        ret += lambda_param.print_for_start()
-        prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
-        ret += f"{prefix}seq_{obj.name}{array} = {obj.sequence2string(False)}" 
-        ret += f"::type_id::create({{\"seq_{obj.name}\"{reg_name_arr}}}, p_sequencer.{obj.name}{array});\n"
-        ret += lambda_param.print_for_end()
+        if (obj.sequence2string(False) != None):
+            ret += lambda_param.print_for_start()
+            prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
+            ret += f"{prefix}seq_{obj.name}{array} = {obj.sequence2string(False)}" 
+            ret += f"::type_id::create({{\"seq_{obj.name}\"{reg_name_arr}}}, p_sequencer.{obj.name}{array});\n"
+            ret += lambda_param.print_for_end()
         return ret
 
     @staticmethod

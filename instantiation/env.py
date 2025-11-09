@@ -73,7 +73,14 @@ class uvm_env:
             return f"uvm_{self.pkg_name}::{direction}{self.generic2string()}"
 
     def sequence2string(self, direction):
-        return f"uvm_{self.pkg_name}::sequence_lib{self.generic2string()}"
+        tmp_dir = base.agent_dir_get(self.dir, direction)
+        if (tmp_dir == base.agent_dir.RX):
+            return f"uvm_{self.pkg_name}::sequence_lib{self.generic2string()}"
+        elif (tmp_dir == base.agent_dir.TX):
+            return None
+        else:
+            return None
+
 
     def item2string(self, direction):
         return f"uvm_{self.pkg_name}::sequence_item{self.generic2string()}"

@@ -82,6 +82,19 @@ class top_env:
         ret += lambda_param.print_for_end()
         return ret
 
+    def gen_connect_phase_sequencer(obj, lambda_param):
+        direction = False
+        array = "".join([f"[{x[0]}]" for x in lambda_param.array]);
+
+        ret = ""
+        ret += lambda_param.print_for_start()
+        prefix  = lambda_param.print_prefix()
+        if (obj.sequence2string(False) != None):
+            ret += f"{prefix}m_sequencer.{obj.name}{array} = {obj.name}{array}.m_sequencer;\n"
+        ret += lambda_param.print_for_end()
+        return ret
+
+
     @staticmethod
     def gen_decl(obj, lambda_param):
         array   = "".join([f"[{x[1]}]" for x in lambda_param.array])
@@ -157,6 +170,12 @@ class top_env:
         for block in blocks:
             lambda_param = instantiation.lambda_param(2);
             lambda_gen = [top_env.gen_connect_phase];
+            ret_str = block.lambda2string(lambda_gen, lambda_param);
+            print (ret_str, file = file, end='')
+        print (f"", file = file)
+        for block in blocks:
+            lambda_param = instantiation.lambda_param(2);
+            lambda_gen = [top_env.gen_connect_phase_sequencer];
             ret_str = block.lambda2string(lambda_gen, lambda_param);
             print (ret_str, file = file, end='')
         print (f"\tendfunction", file = file)

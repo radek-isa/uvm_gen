@@ -13,17 +13,19 @@ class virt_sequencer:
 
     def __init__(self):
         self.name = "sequencer"
-    
+
     def name_get(self):
         return self.name
 
     @staticmethod
     def gen_seqr_decl(obj, lambda_param):
-        prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
-        array  = "".join([f"[{x[1]}]" for x in lambda_param.array])
-
         ret = ""
-        ret += f"{prefix}{obj.pkg2string()}::sequencer{obj.generic2string()} {obj.name}{array};\n"
+
+        if (obj.sequence2string(False) != None):
+            prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
+            array  = "".join([f"[{x[1]}]" for x in lambda_param.array])
+
+            ret += f"{prefix}{obj.pkg2string()}::sequencer{obj.generic2string()} {obj.name}{array};\n"
         return ret
 
     def generate(self, file, blocks, generic):
