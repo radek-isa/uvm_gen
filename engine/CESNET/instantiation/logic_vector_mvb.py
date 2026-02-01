@@ -3,9 +3,9 @@
 import base
 
 class uvm_logic_vector_mvb:
-    
+
     """
-        This class represent instantionation of uvm_logic_vector_mvb. 
+        This class represent instantionation of uvm_logic_vector_mvb.
     """
 
     def __init__(self, type_class, xml):
@@ -39,7 +39,7 @@ class uvm_logic_vector_mvb:
         return "analysis_port"
 
     def generic2string(self):
-        generic  =       self.generics["ITEMS"]     
+        generic  =       self.generics["ITEMS"]
         generic += "," + self.generics["ITEM_WIDTH"]
         return f"#({generic})"
 
@@ -75,7 +75,7 @@ class uvm_logic_vector_mvb:
                     agent = self.name,
                     array = array,
                     prefix = prefix,
-                    reset_connet = reset_connet 
+                    reset_connet = reset_connet
                 )
 
     def agents_get(self, agents):
@@ -85,9 +85,9 @@ class uvm_logic_vector_mvb:
         prefix = "\t"
         block_generic = base.cfg_substitute(cfg, self.generics);
         generic = "#("
-        generic += f"\n{prefix}\t"  + block_generic["ITEMS"]     
+        generic += f"\n{prefix}\t"  + block_generic["ITEMS"]
         generic += f"\n{prefix}\t," + block_generic["ITEM_WIDTH"]
-        generic += f"\n{prefix})" 
+        generic += f"\n{prefix})"
 
         str_ret = f_string.format(
                 prefix   = "",
