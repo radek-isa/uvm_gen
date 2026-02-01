@@ -19,10 +19,10 @@ class testbench:
         return self.name
 
 
-    def generate(self, file, blocks, generic):
+    def generate(self, file, blocks, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "tetbench.sv"), file = file)
+        print (uvm_gen_preambule("tetbench.sv", preambule_inf), file = file)
         print (f"", file = file)
         print (f"import uvm_pkg::*;", file = file)
         print (f"`include \"uvm_macros.svh\"", file = file)

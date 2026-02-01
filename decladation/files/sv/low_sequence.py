@@ -19,11 +19,11 @@ class low_sequence:
     def name_get(self):
         return self.name
 
-    def generate(self, file, generic):
+    def generate(self, file, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
         agent_seq_item = self.agent.item2string("");
-        print (uvm_gen_preambule.format(name = (self.name + ".sv")), file = file)
+        print (uvm_gen_preambule(self.name + ".sv", preambule_inf), file = file)
         print (f"class {self.agent.name}_config_sequence extends uvm_object;", file = file)
         print (f"\t`uvm_object_utils(uvm_{self.pkg_name}::{self.agent.name}_config_sequence)", file = file)
         print (f"", file = file)

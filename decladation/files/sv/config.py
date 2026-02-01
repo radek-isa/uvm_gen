@@ -19,10 +19,10 @@ class config:
     def name_get(self):
         return self.name
 
-    def generate(self, file, blocks, generic):
+    def generate(self, file, blocks, generic, preambule_inf):
         #(generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "config.sv"), file = file)
+        print (uvm_gen_preambule("config.sv", preambule_inf), file = file)
         print (f"class config_sequence extends uvm_object;", file = file)
         print (f"\t`uvm_object_utils(uvm_{self.pkg_name}::config_sequence)", file = file)
         print (f"", file = file)

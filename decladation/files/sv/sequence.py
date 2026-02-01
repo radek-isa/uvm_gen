@@ -18,10 +18,10 @@ class sequence:
     def name_get(self):
         return self.name
 
-    def generate(self, file, generic):
+    def generate(self, file, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "sequence.sv"), file = file)
+        print (uvm_gen_preambule("sequence.sv", preambule_inf), file = file)
         print (f"class sequence_base{generic_decl} extends uvm_common::sequence_base#(config_sequence, sequence_item{generic_assign});", file = file)
         print (f"\t`uvm_object_param_utils(uvm_{self.pkg_name}::sequence_base{generic_assign})", file = file)
         print (f"", file = file)

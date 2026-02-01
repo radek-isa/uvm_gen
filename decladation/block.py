@@ -82,7 +82,7 @@ class block:
 
         return generic_assign
 
-    def gen_pkg(self, path, name):
+    def gen_pkg(self, path, name, cfg):
         pkg_path = path / name
         print(f"uvm_env {name} {path}")
 
@@ -91,7 +91,7 @@ class block:
             os.makedirs(pkg_path)
 
         with open(pkg_path / "pkg.sv", 'w') as file:
-            print (files.sv.constant.uvm_gen_preambule.format(name = "pkg.sv"), file = file)
+            print (files.sv.constant.uvm_gen_preambule("pkg.sv", cfg), file = file)
             print (f"package uvm_{name};", file = file)
             print (f"", file = file);
             print (f"\timport uvm_pkg::*;", file = file)

@@ -150,10 +150,10 @@ class env:
         return ret
 
 
-    def generate(self, file, generic):
+    def generate(self, file, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "env.sv"), file = file)
+        print (uvm_gen_preambule("env.sv", preambule_inf), file = file)
         print (f"class env_rx{generic_decl} extends uvm_env;", file = file)
         print (f"\t`uvm_component_param_utils(uvm_{self.pkt_name}::env_rx{generic_assign})", file = file)
         print (f"", file = file)
