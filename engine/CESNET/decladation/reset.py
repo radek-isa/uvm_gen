@@ -13,7 +13,7 @@ class uvm_reset:
     def create(self, xml):
         return  instantiation.uvm_reset(self, xml)
 
-    def gen_pkg(self, path, name):
+    def gen_pkg(self, path, name, cfg):
         print(f"uvm_reset {name} {path}")
 
     def module_path(self, name):

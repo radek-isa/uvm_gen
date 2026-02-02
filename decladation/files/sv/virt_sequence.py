@@ -23,7 +23,8 @@ class virt_sequence:
         array  = "".join([f"[{x[1]}]" for x in lambda_param.array])
 
         ret = ""
-        ret += f"{prefix}protected {obj.sequence2string(False)} seq_{obj.name}{array};\n"
+        if (obj.sequence2string(False) != None):
+            ret += f"{prefix}protected {obj.sequence2string(False)} seq_{obj.name}{array};\n"
         return ret
 
     @staticmethod
@@ -38,11 +39,12 @@ class virt_sequence:
             reg_name_arr += ")"
 
         ret = ""
-        ret += lambda_param.print_for_start()
-        prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
-        ret += f"{prefix}seq_{obj.name}{array} = {obj.sequence2string(False)}" 
-        ret += f"::type_id::create({{\"seq_{obj.name}\"{reg_name_arr}}}, p_sequencer.{obj.name}{array});\n"
-        ret += lambda_param.print_for_end()
+        if (obj.sequence2string(False) != None):
+            ret += lambda_param.print_for_start()
+            prefix = "".join(["\t" for x in range (0, lambda_param.prefix)])
+            ret += f"{prefix}seq_{obj.name}{array} = {obj.sequence2string(False)}" 
+            ret += f"::type_id::create({{\"seq_{obj.name}\"{reg_name_arr}}}, p_sequencer.{obj.name}{array});\n"
+            ret += lambda_param.print_for_end()
         return ret
 
     @staticmethod
@@ -69,10 +71,10 @@ class virt_sequence:
         ret += lambda_param.print_for_end()
         return ret
 
-    def generate(self, file, blocks, generic):
+    def generate(self, file, blocks, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = self.name), file = file)
+        print (uvm_gen_preambule(f"{self.name}.sv", preambule_inf), file = file)
         print (f"class sequence_base{generic_decl} extends uvm_sequence;", file = file)
         print (f"\t`uvm_object_param_utils(uvm_env_top::sequence_base{generic_assign})", file = file)
         print (f"\t`uvm_declare_p_sequencer(uvm_env_top::sequencer{generic_assign})", file = file)

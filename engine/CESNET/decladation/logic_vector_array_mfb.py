@@ -13,7 +13,7 @@ class uvm_logic_vector_array_mfb:
     def create(self, xml):
         return  instantiation.uvm_logic_vector_array_mfb(self, xml)
 
-    def gen_pkg(self, path, name):
+    def gen_pkg(self, path, name, cfg):
         print(f"uvm_logic_vector_array_mfb {name} {path}")
 
     def module_path(self, name):

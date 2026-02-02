@@ -3,9 +3,9 @@
 import base
 
 class uvm_logic_vector_mvb:
-    
+
     """
-        This class represent instantionation of uvm_logic_vector_mvb. 
+        This class represent instantionation of uvm_logic_vector_mvb.
     """
 
     def __init__(self, type_class, xml):
@@ -39,7 +39,7 @@ class uvm_logic_vector_mvb:
         return "analysis_port"
 
     def generic2string(self):
-        generic  =       self.generics["ITEMS"]     
+        generic  =       self.generics["ITEMS"]
         generic += "," + self.generics["ITEM_WIDTH"]
         return f"#({generic})"
 
@@ -56,13 +56,14 @@ class uvm_logic_vector_mvb:
             return f"uvm_logic_vector_mvb::{direction}{self.generic2string()}"
 
     def sequence2string(self, direction):
-        tmp_dir = agent_dir_get(self.dir, direction)
+        tmp_dir = base.agent_dir_get(self.dir, direction)
         if (tmp_dir == base.agent_dir.RX):
-            return f"uvm_logic_vector::sequence_simple{self.generics[ITEM_WIDTH]}"
+            item_width = self.generics["ITEM_WIDTH"];
+            return f"uvm_logic_vector::sequence_simple{item_width}"
         elif (tmp_dir == base.agent_dir.TX):
-            return f"uvm_mvb::sequence_lib_tx{self.generic2string()}"
+            return None
         else:
-            return None 
+            return None
 
     def item2string(self, direction):
         generic = self.generics["ITEM_WIDTH"]
@@ -74,7 +75,7 @@ class uvm_logic_vector_mvb:
                     agent = self.name,
                     array = array,
                     prefix = prefix,
-                    reset_connet = reset_connet 
+                    reset_connet = reset_connet
                 )
 
     def agents_get(self, agents):
@@ -84,9 +85,9 @@ class uvm_logic_vector_mvb:
         prefix = "\t"
         block_generic = base.cfg_substitute(cfg, self.generics);
         generic = "#("
-        generic += f"\n{prefix}\t"  + block_generic["ITEMS"]     
+        generic += f"\n{prefix}\t"  + block_generic["ITEMS"]
         generic += f"\n{prefix}\t," + block_generic["ITEM_WIDTH"]
-        generic += f"\n{prefix})" 
+        generic += f"\n{prefix})"
 
         str_ret = f_string.format(
                 prefix   = "",

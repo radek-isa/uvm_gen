@@ -30,7 +30,7 @@ class uvm_gen:
         #create top level environment
         self.testbench   = decladation.uvm_testbench(xml_root, self.agents);
 
-    def gen_pkg(self, path = pathlib.Path("./uvm")):
+    def gen_pkg(self, preambule_cfg, path = pathlib.Path("./uvm")):
         firmware_path = "../../../"
 
         # Create directory
@@ -43,14 +43,14 @@ class uvm_gen:
             os.makedirs(tbench_path)
 
         for gen in self.agents:
-            self.agents[gen].gen_pkg(tbench_path, gen)
+            self.agents[gen].gen_pkg(tbench_path, gen, preambule_cfg)
 
-        self.testbench.gen_pkg(tbench_path, "testbench.sv")
+        self.testbench.gen_pkg(tbench_path, "testbench.sv", preambule_cfg)
         #generate top_level.fdo and Modules.tcl
         with open(path / "Modules.tcl", 'w') as file:
             print (f"# Modules.tcl: Components include script", file = file)
-            print (f"# Copyright (C) 2025 CESNET z. s. p. o.", file = file)
-            print (f"# Author(s): Radek Iša <isa@cesnet.cz>", file = file)
+            print (f"# Copyright (C) {preambule_cfg.year} CESNET z. s. p. o.", file = file)
+            print (f"# Author(s): {preambule_cfg.author_name} <{preambule_cfg.author_email}>", file = file)
             print (f"#", file = file)
             print (f"# SPDX-License-Identifier: BSD-3-Clause", file = file)
             print (f"", file = file)
@@ -71,8 +71,8 @@ class uvm_gen:
 
         with open(path / "top_level.fdo", 'w') as file:
             print (f"# Modules.tcl: Components include script", file = file)
-            print (f"# Copyright (C) 2025 CESNET z. s. p. o.", file = file)
-            print (f"# Author(s): Mikuláš Brázda <xbrazd21@vutbr.cz>", file = file)
+            print (f"# Copyright (C) {preambule_cfg.year} CESNET z. s. p. o.", file = file)
+            print (f"# Author(s): {preambule_cfg.author_name} <{preambule_cfg.author_email}>", file = file)
             print (f"#", file = file)
             print (f"# SPDX-License-Identifier: BSD-3-Clause", file = file)
             print (f"", file = file)

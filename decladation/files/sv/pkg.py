@@ -26,10 +26,10 @@ class pkg:
         return self.name
 
 
-    def generate(self, file, blocks, generic):
+    def generate(self, file, blocks, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = self.name), file = file)
+        print (uvm_gen_preambule(f"{self.name}.sv", preambule_inf), file = file)
         print (f"package {self.name};", file = file)
         print (f"", file = file);
         print (f"\timport uvm_pkg::*;", file = file)

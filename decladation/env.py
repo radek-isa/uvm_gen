@@ -43,8 +43,8 @@ class uvm_env(block):
         return  instantiation.uvm_env(self, xml)
         #return  instantiation.uvm_env(xml, self.interfaces)
 
-    def gen_pkg(self, path, name):
-        super().gen_pkg(path, name)
+    def gen_pkg(self, path, name, preambule_inf):
+        super().gen_pkg(path, name, preambule_inf)
 
         pkg_path = path / name
 
@@ -56,35 +56,35 @@ class uvm_env(block):
         for agent in agents:
             low_sequence = files.sv.low_sequence(name, agent)
             with open(pkg_path / f"{low_sequence.name_get()}.sv", 'w') as file:
-                low_sequence.generate(file, (generic_decl, generic_assign))
+                low_sequence.generate(file, (generic_decl, generic_assign), preambule_inf)
 
         sequence_item = files.sv.sequence_item(name, self.items, self.convert2string)
         with open(pkg_path / f"{sequence_item.name_get()}.sv", 'w') as file:
-            sequence_item.generate(file, (generic_decl, generic_assign))
+            sequence_item.generate(file, (generic_decl, generic_assign), preambule_inf)
 
         config = files.sv.config(name, self.config)
         with open(pkg_path / f"{config.name_get()}.sv", 'w') as file:
-            config.generate(file, None, (generic_decl, generic_assign))
+            config.generate(file, None, (generic_decl, generic_assign), preambule_inf)
 
         monitor = files.sv.monitor(name, self.blocks)
         with open(pkg_path / f"{monitor.name_get()}.sv", 'w') as file:
-            monitor.generate(file, (generic_decl, generic_assign))
+            monitor.generate(file, (generic_decl, generic_assign), preambule_inf)
 
         driver = files.sv.driver(name, self.blocks)
         with open(pkg_path / f"{driver.name_get()}.sv", 'w') as file:
-            driver.generate(file, (generic_decl, generic_assign))
+            driver.generate(file, (generic_decl, generic_assign), preambule_inf)
 
         sequencer = files.sv.sequencer(name)
         with open(pkg_path / f"{sequencer.name_get()}.sv", 'w') as file:
-            sequencer.generate(file, (generic_decl, generic_assign))
+            sequencer.generate(file, (generic_decl, generic_assign), preambule_inf)
 
         sequence = files.sv.sequence(name)
         with open(pkg_path / f"{sequence.name_get()}.sv", 'w') as file:
-            sequence.generate(file, (generic_decl, generic_assign))
+            sequence.generate(file, (generic_decl, generic_assign), preambule_inf)
 
         env = files.sv.env(name, self.blocks)
         with open(pkg_path / f"{env.name_get()}.sv", 'w') as file:
-            env.generate(file, (generic_decl, generic_assign))
+            env.generate(file, (generic_decl, generic_assign), preambule_inf)
 
     def module_path(self, name):
         return f"lappend MOD \"$ENTITY_BASE/tbench/{name}/pkg.sv\""

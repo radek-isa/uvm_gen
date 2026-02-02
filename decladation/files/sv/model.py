@@ -67,10 +67,10 @@ class model:
         return ret
 
 
-    def generate(self, file, blocks, generic):
+    def generate(self, file, blocks, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "model.sv"), file = file)
+        print (uvm_gen_preambule("model.sv", preambule_inf), file = file)
         print (f"class model{generic_decl} extends uvm_component;", file = file)
         print (f"\t`uvm_component_param_utils(uvm_env_top::model{generic_assign})", file = file)
         print (f"", file = file)

@@ -71,10 +71,10 @@ class monitor:
         return ret
 
 
-    def generate(self, file, generic):
+    def generate(self, file, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "monitor.sv"), file = file)
+        print (uvm_gen_preambule("monitor.sv", preambule_inf), file = file)
         print (f"class monitor{generic_decl} extends uvm_monitor;", file = file)
         print (f"\t`uvm_component_param_utils(uvm_{self.pkg_name}::monitor{generic_assign})", file = file)
         print (f"", file = file)

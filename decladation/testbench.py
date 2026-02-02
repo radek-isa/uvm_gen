@@ -29,8 +29,8 @@ class uvm_testbench(block):
     def create(self, xml):
         return instantiation.uvm_env_top(xml)
 
-    def gen_pkg(self, path, name):
-        super().gen_pkg(path, "env_top")
+    def gen_pkg(self, path, name, preambule_inf):
+        super().gen_pkg(path, "env_top", preambule_inf)
 
         pkg_path = path / "env_top"
 
@@ -40,39 +40,39 @@ class uvm_testbench(block):
         #Generate sequence.sv
         sequence = files.sv.virt_sequence()
         with open(pkg_path / f"{sequence.name_get()}.sv", 'w') as file:
-            sequence.generate(file, self.blocks, (generic_decl, generic_assign))
+            sequence.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         sequencer = files.sv.virt_sequencer()
         with open(pkg_path / f"{sequencer.name_get()}.sv", 'w') as file:
-            sequencer.generate(file, self.blocks, (generic_decl, generic_assign))
+            sequencer.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         config = files.sv.config("env_top")
         with open(pkg_path / f"{config.name_get()}.sv", 'w') as file:
-            config.generate(file, self.blocks, (generic_decl, generic_assign))
+            config.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         # Generate env.sv
         env = files.sv.top_env()
         with open(pkg_path / f"{env.name_get()}.sv", 'w') as file:
-            env.generate(file, self.blocks, (generic_decl, generic_assign))
+            env.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         model = files.sv.model()
         with open(pkg_path / f"{model.name_get()}.sv", 'w') as file:
-            model.generate(file, self.blocks, (generic_decl, generic_assign))
+            model.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         scoreboard = files.sv.scoreboard()
         with open(pkg_path / f"{scoreboard.name_get()}.sv", 'w') as file:
-            scoreboard.generate(file, self.blocks, (generic_decl, generic_assign))
+            scoreboard.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         testbench = files.sv.testbench(self.dut)
         with open(path / f"{testbench.name_get()}.sv", 'w') as file:
-            testbench.generate(file, self.blocks, (generic_decl, generic_assign))
+            testbench.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         generic_pkg = files.sv.pkg("generic_pkg")
         for generic in self.generics:
             generic_pkg.add_parameter(generic, self.generics[generic]["value"], self.generics[generic]["type"]);
         generic_pkg.add_parameter("CLK_PERIOD", "4ns", "time");
         with open(path / f"{generic_pkg.name_get()}.sv", 'w') as file:
-            generic_pkg.generate(file, self.blocks, (generic_decl, generic_assign))
+            generic_pkg.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         # Create test
         test_path = path / "test"
@@ -82,10 +82,10 @@ class uvm_testbench(block):
         test_pkg = files.sv.pkg("test")
         test_pkg.add_file(f"base.sv");
         with open(test_path / f"pkg.sv", 'w') as file:
-            test_pkg.generate(file, self.blocks, (generic_decl, generic_assign))
+            test_pkg.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
         test = files.sv.test("base")
         with open(test_path / f"{test.name_get()}.sv", 'w') as file:
-            test.generate(file, self.blocks, (generic_decl, generic_assign))
+            test.generate(file, self.blocks, (generic_decl, generic_assign), preambule_inf)
 
 

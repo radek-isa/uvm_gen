@@ -62,13 +62,14 @@ class uvm_logic_vector_array_mfb:
             return f"uvm_logic_vector_array_mfb::{direction}{self.generic2string()}"
 
     def sequence2string(self, direction):
-        tmp_dir = agent_dir_get(self.dir, direction)
+        tmp_dir = base.agent_dir_get(self.dir, direction)
         if (tmp_dir == base.agent_dir.RX):
-            return f"uvm_logic_vector_array::sequence_lib{self.generics[ITEM_WIDTH]}"
+            item_width = self.generics["ITEM_WIDTH"]
+            return f"uvm_logic_vector_array::sequence_lib{item_width}"
         elif (tmp_dir == base.agent_dir.TX):
-            return f"uvm_mfb::sequence_lib_tx{self.generic2string()}"
+            return None
         else:
-            return None 
+            return None
 
     def item2string(self, direction):
         generic = self.generics["ITEM_WIDTH"]

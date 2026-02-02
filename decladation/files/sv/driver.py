@@ -68,10 +68,10 @@ class driver:
         return ret
 
 
-    def generate(self, file, generic):
+    def generate(self, file, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "driver.sv"), file = file)
+        print (uvm_gen_preambule("driver.sv", preambule_inf), file = file)
         print (f"class driver{generic_decl} extends uvm_driver#(sequence_item{generic_assign});", file = file)
         print (f"\t`uvm_component_param_utils(uvm_{self.pkg_name}::driver{generic_assign})", file = file)
         print (f"", file = file)

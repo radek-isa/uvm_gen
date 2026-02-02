@@ -17,10 +17,10 @@ class test:
     def name_get(self):
         return self.name
 
-    def generate(self, file, blocks, generic):
+    def generate(self, file, blocks, generic, preambule_inf):
         (generic_decl, generic_assign) = generic
 
-        print (uvm_gen_preambule.format(name = "base.sv"), file = file)
+        print (uvm_gen_preambule("base.sv", preambule_inf), file = file)
         print (f"class {self.name}{generic_decl} extends uvm_test;", file = file)
         print (f"\ttypedef uvm_component_registry #(test::base{generic_assign}, \"test::{self.name}\") type_id;", file = file)
         print (f"//change to something more generic.", file = file)
